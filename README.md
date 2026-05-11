@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # MemoryAPI 🧠
 ### Give any AI app persistent memory. Two endpoints. That's it.
 
@@ -168,3 +169,6 @@ requests.post("https://yourapi.com/memory/search", json={
 ---
 
 Built with FastAPI + Supabase pgvector + sentence-transformers
+=======
+# Magno-memory-api
+>>>>>>> 47c374ce3e2463adbb18e941a3069e903c2c87a3
