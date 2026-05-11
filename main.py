@@ -443,13 +443,5 @@ async def search_memories(
 
 @app.get("/")
 async def root():
-    return {
-        "api":     "MagnoAPI",
-        "version": "2.0.0",
-        "status":  "running",
-        "docs":    "/docs",
-        "endpoints": {
-            "public":    ["POST /keys/create"],
-            "protected": ["POST /memory/store", "POST /memory/search"]
-        }
-    }
+    return FileResponse("index.html")
+    
