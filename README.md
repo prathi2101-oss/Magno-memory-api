@@ -1,5 +1,5 @@
 <<<<<<< HEAD
-# MemoryAPI 🧠
+# MagnoAPI 🧠
 ### Give any AI app persistent memory. Two endpoints. That's it.
 
 ---
