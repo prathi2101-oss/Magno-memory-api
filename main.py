@@ -1,4 +1,5 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Security, Depends
+from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
 from datetime import datetime
@@ -6,10 +7,11 @@ from dotenv import load_dotenv
 import psycopg2
 import psycopg2.extras
 import numpy as np
+import secrets
 import json
 import os
 
-# ── Load the database URL from .env ───────────────────────────────────────
+# ── Load environment variables ─────────────────────────────────────────────
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
 
@@ -23,28 +25,128 @@ print("Model ready. API starting...")
 
 app = FastAPI(
     title="MagnoAPI",
-    description="Give any AI app persistent memory across conversations.",
-    version="1.0.0"
+    description="""
+Give any AI app persistent memory across conversations.
+
+## Authentication
+All `/memory` endpoints require an API key passed in the request header:
+```
+X-API-Key: magno_sk_your_key_here
+```
+
+Get your free API key by calling `POST /keys/create` with your email.
+
+## Free Tier
+- 1,000 API calls per month
+- Includes both store and search operations
+""",
+    version="2.0.0"
 )
 
 
 # ══════════════════════════════════════════════════════════════════════════
 # DATABASE HELPER
-#
-# Instead of using the supabase-py library (which had endless dependency
-# conflicts), we connect directly to the PostgreSQL database.
-# psycopg2 is the standard, rock-solid PostgreSQL driver for Python.
-# It has been around for 15+ years with zero drama.
 # ══════════════════════════════════════════════════════════════════════════
 
 def get_db():
-    """Open a fresh database connection. Always close it when done."""
     return psycopg2.connect(DATABASE_URL)
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# API KEY SECURITY
+#
+# FastAPI's APIKeyHeader reads the "X-API-Key" header from every request.
+# If the header is missing, it automatically returns a 403 error.
+# Our verify_api_key function then checks if the key exists in the database,
+# is active, and hasn't exceeded its usage limit.
+# ══════════════════════════════════════════════════════════════════════════
+
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+async def verify_api_key(api_key: str = Security(api_key_header)):
+    """
+    Dependency injected into every protected endpoint.
+    Checks: key exists → key is active → usage is within limit.
+    On success: increments usage count and returns the key record.
+    On failure: raises 401 Unauthorized.
+    """
+
+    # Missing header
+    if not api_key:
+        raise HTTPException(
+            status_code=401,
+            detail="API key required. Add 'X-API-Key: your_key' to your request headers. Get a free key at POST /keys/create"
+        )
+
+    conn = None
+    try:
+        conn = get_db()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # Look up the key in the database
+        cur.execute("""
+            SELECT id, email, tier, usage_count, usage_limit, is_active
+            FROM api_keys
+            WHERE key = %s
+        """, (api_key,))
+
+        record = cur.fetchone()
+
+        # Key doesn't exist
+        if not record:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid API key. Check your key or get a new one at POST /keys/create"
+            )
+
+        # Key has been deactivated
+        if not record["is_active"]:
+            raise HTTPException(
+                status_code=401,
+                detail="This API key has been deactivated. Contact support."
+            )
+
+        # Usage limit exceeded
+        if record["usage_count"] >= record["usage_limit"]:
+            raise HTTPException(
+                status_code=429,
+                detail=f"Usage limit reached ({record['usage_limit']} calls/month on {record['tier']} tier). Upgrade at magnoapi.com/upgrade"
+            )
+
+        # ✅ Key is valid — increment usage count
+        cur.execute("""
+            UPDATE api_keys
+            SET usage_count = usage_count + 1
+            WHERE key = %s
+        """, (api_key,))
+        conn.commit()
+
+        return dict(record)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"API KEY VERIFICATION ERROR: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if conn:
+            conn.close()
 
 
 # ══════════════════════════════════════════════════════════════════════════
 # REQUEST / RESPONSE MODELS
 # ══════════════════════════════════════════════════════════════════════════
+
+class CreateKeyRequest(BaseModel):
+    email: str
+
+class CreateKeyResponse(BaseModel):
+    api_key: str
+    email: str
+    tier: str
+    usage_limit: int
+    message: str
 
 class StoreRequest(BaseModel):
     user_id: str
@@ -74,12 +176,7 @@ class SearchResponse(BaseModel):
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# HELPER — Cosine Similarity
-#
-# Given two vectors, this tells us how similar they are in meaning.
-# Score of 1.0 = identical meaning
-# Score of 0.5 = somewhat related
-# Score of 0.0 = completely unrelated
+# COSINE SIMILARITY HELPER
 # ══════════════════════════════════════════════════════════════════════════
 
 def cosine_similarity(vec_a: list, vec_b: list) -> float:
@@ -93,19 +190,17 @@ def cosine_similarity(vec_a: list, vec_b: list) -> float:
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# STARTUP — Create the memories table if it doesn't exist
-#
-# This runs automatically when the API starts. So you don't need to
-# manually run any SQL setup — the API creates its own table on first boot.
+# STARTUP — Create tables if they don't exist
 # ══════════════════════════════════════════════════════════════════════════
 
 @app.on_event("startup")
-async def create_table():
-    """Create the memories table if it doesn't already exist."""
+async def create_tables():
     conn = None
     try:
         conn = get_db()
         cur = conn.cursor()
+
+        # Memories table
         cur.execute("""
             CREATE TABLE IF NOT EXISTS memories (
                 id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -115,41 +210,134 @@ async def create_table():
                 metadata   JSONB       DEFAULT '{}',
                 stored_at  TIMESTAMPTZ DEFAULT NOW()
             );
-
-            CREATE INDEX IF NOT EXISTS memories_user_id_idx
-                ON memories (user_id);
+            CREATE INDEX IF NOT EXISTS memories_user_id_idx ON memories (user_id);
         """)
+
+        # API keys table
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS api_keys (
+                id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+                key         TEXT UNIQUE NOT NULL,
+                email       TEXT NOT NULL,
+                tier        TEXT DEFAULT 'free',
+                usage_count INTEGER DEFAULT 0,
+                usage_limit INTEGER DEFAULT 1000,
+                created_at  TIMESTAMPTZ DEFAULT NOW(),
+                is_active   BOOLEAN DEFAULT TRUE
+            );
+            CREATE INDEX IF NOT EXISTS api_keys_key_idx ON api_keys (key);
+        """)
+
         conn.commit()
-        print("Database table ready.")
+        print("Database tables ready.")
     except Exception as e:
-        print(f"Startup table creation error: {e}")
+        print(f"Startup error: {e}")
     finally:
         if conn:
             conn.close()
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# ENDPOINT 1 — POST /memory/store
+# ENDPOINT 1 — POST /keys/create
+#
+# PUBLIC endpoint — no API key required to call this.
+# A developer sends their email and gets back a unique API key.
+#
+# The key format is: magno_sk_ + 32 random hex characters
+# Example: magno_sk_a3f7c821b9d4e2f8c1a05d9e7b3f4c6d
+#
+# This is the only door into your system. Everything else is locked
+# behind the key that this endpoint creates.
+# ══════════════════════════════════════════════════════════════════════════
+
+@app.post("/keys/create", response_model=CreateKeyResponse)
+async def create_api_key(request: CreateKeyRequest):
+    """
+    Get a free API key. No authentication required.
+    Send your email and receive your key instantly.
+    """
+
+    if not request.email or "@" not in request.email:
+        raise HTTPException(status_code=400, detail="A valid email address is required.")
+
+    conn = None
+    try:
+        conn = get_db()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+        # Check if this email already has a key
+        cur.execute("SELECT key FROM api_keys WHERE email = %s", (request.email,))
+        existing = cur.fetchone()
+
+        if existing:
+            return CreateKeyResponse(
+                api_key=existing["key"],
+                email=request.email,
+                tier="free",
+                usage_limit=1000,
+                message="You already have an API key. Here it is again."
+            )
+
+        # Generate a new unique key
+        # secrets.token_hex(16) generates 32 cryptographically random hex characters
+        new_key = f"magno_sk_{secrets.token_hex(16)}"
+
+        # Save to database
+        cur.execute("""
+            INSERT INTO api_keys (key, email, tier, usage_count, usage_limit, is_active)
+            VALUES (%s, %s, 'free', 0, 1000, TRUE)
+        """, (new_key, request.email))
+
+        conn.commit()
+
+        return CreateKeyResponse(
+            api_key=new_key,
+            email=request.email,
+            tier="free",
+            usage_limit=1000,
+            message="Your API key has been created. Keep it safe — treat it like a password. Add it to all requests as: X-API-Key: " + new_key
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"CREATE KEY ERROR: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if conn:
+            conn.close()
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# ENDPOINT 2 — POST /memory/store
+#
+# PROTECTED — requires a valid API key in the X-API-Key header.
+# The `key_data = Depends(verify_api_key)` line is what enforces this.
+# FastAPI runs verify_api_key before the endpoint function even starts.
+# If the key is invalid, the request never reaches this function.
 # ══════════════════════════════════════════════════════════════════════════
 
 @app.post("/memory/store", response_model=StoreResponse)
-async def store_memory(request: StoreRequest):
+async def store_memory(
+    request: StoreRequest,
+    key_data: dict = Depends(verify_api_key)   # ← API key check happens here
+):
     """
     Save a memory for a user.
-    Call this AFTER your LLM responds, passing in the conversation text.
+    Requires: X-API-Key header with your MagnoAPI key.
+    Call this AFTER your LLM responds.
     """
+
     if not request.text.strip():
         raise HTTPException(status_code=400, detail="Text cannot be empty.")
 
     conn = None
     try:
-        # Convert text to a 384-number vector representing its meaning
         embedding = model.encode(request.text).tolist()
 
         conn = get_db()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        # Insert the memory directly into Postgres using standard SQL
         cur.execute("""
             INSERT INTO memories (user_id, text, embedding, metadata, stored_at)
             VALUES (%s, %s, %s, %s, %s)
@@ -157,7 +345,7 @@ async def store_memory(request: StoreRequest):
         """, (
             request.user_id,
             request.text,
-            json.dumps(embedding),          # Store vector as JSON
+            json.dumps(embedding),
             json.dumps(request.metadata),
             datetime.utcnow().isoformat()
         ))
@@ -182,27 +370,32 @@ async def store_memory(request: StoreRequest):
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# ENDPOINT 2 — POST /memory/search
+# ENDPOINT 3 — POST /memory/search
+#
+# PROTECTED — requires a valid API key in the X-API-Key header.
 # ══════════════════════════════════════════════════════════════════════════
 
 @app.post("/memory/search", response_model=SearchResponse)
-async def search_memories(request: SearchRequest):
+async def search_memories(
+    request: SearchRequest,
+    key_data: dict = Depends(verify_api_key)   # ← API key check happens here
+):
     """
     Find memories relevant to the current query.
+    Requires: X-API-Key header with your MagnoAPI key.
     Call this BEFORE your LLM call, then inject results into the prompt.
     """
+
     if not request.query.strip():
         raise HTTPException(status_code=400, detail="Query cannot be empty.")
 
     conn = None
     try:
-        # Convert the search query into a vector
         query_vector = model.encode(request.query).tolist()
 
         conn = get_db()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        # Fetch all memories belonging to this user
         cur.execute("""
             SELECT id, text, embedding, metadata, stored_at
             FROM memories
@@ -214,11 +407,9 @@ async def search_memories(request: SearchRequest):
         if not rows:
             return SearchResponse(results=[], total_found=0)
 
-        # Score each memory by cosine similarity with the query vector
         scored = []
         for row in rows:
-            stored_embedding = row["embedding"]
-            score = cosine_similarity(query_vector, stored_embedding)
+            score = cosine_similarity(query_vector, row["embedding"])
             scored.append({
                 "id":         str(row["id"]),
                 "text":       row["text"],
@@ -227,7 +418,6 @@ async def search_memories(request: SearchRequest):
                 "stored_at":  str(row["stored_at"])
             })
 
-        # Sort by relevance (highest score first) and return top K
         scored.sort(key=lambda x: x["similarity"], reverse=True)
         top_results = scored[:request.top_k]
 
@@ -247,17 +437,18 @@ async def search_memories(request: SearchRequest):
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# ROOT — Health check
+# ROOT — Health check (public, no key required)
 # ══════════════════════════════════════════════════════════════════════════
 
 @app.get("/")
 async def root():
     return {
         "api":     "MagnoAPI",
-        "version": "1.0.0",
+        "version": "2.0.0",
         "status":  "running",
-        "endpoints": [
-            "POST /memory/store  → Save a memory",
-            "POST /memory/search → Find relevant memories"
-        ]
+        "docs":    "/docs",
+        "endpoints": {
+            "public":    ["POST /keys/create"],
+            "protected": ["POST /memory/store", "POST /memory/search"]
+        }
     }
