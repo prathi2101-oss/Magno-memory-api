@@ -22,9 +22,9 @@ model = SentenceTransformer("all-MiniLM-L6-v2")
 print("Model ready. API starting...")
 
 app = FastAPI(
-    title="MemoryAPI",
+    title="MagnoAPI",
     description="Give any AI app persistent memory across conversations.",
-    version="3.0.0"
+    version="1.0.0"
 )
 
 
@@ -253,8 +253,8 @@ async def search_memories(request: SearchRequest):
 @app.get("/")
 async def root():
     return {
-        "api":     "MemoryAPI",
-        "version": "3.0.0",
+        "api":     "MagnoAPI",
+        "version": "1.0.0",
         "status":  "running",
         "endpoints": [
             "POST /memory/store  → Save a memory",
