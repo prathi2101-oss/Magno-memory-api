@@ -7,691 +7,440 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --black:   #050508;
-    --pink:    #ff2d6b;
-    --cyan:    #00f5ff;
-    --lime:    #b8ff3c;
-    --purple:  #9b4dff;
-    --white:   #f0f0f5;
-    --muted:   #888899;
-    --card:    #0e0e14;
-    --border:  #1e1e2e;
+    --black:  #050508;
+    --pink:   #ff2d6b;
+    --cyan:   #00f5ff;
+    --lime:   #b8ff3c;
+    --purple: #9b4dff;
+    --white:  #f0f0f5;
+    --muted:  #888899;
+    --card:   #0e0e14;
+    --border: #1e1e2e;
   }
 
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   html { scroll-behavior: smooth; }
+  body { background: var(--black); color: var(--white); font-family: 'Syne', sans-serif; overflow-x: hidden; cursor: none; }
 
-  body {
-    background: var(--black);
-    color: var(--white);
-    font-family: 'Syne', sans-serif;
-    overflow-x: hidden;
-    cursor: none;
-  }
+  .cursor     { width:12px;height:12px;background:var(--pink);border-radius:50%;position:fixed;pointer-events:none;z-index:9999;transition:transform 0.1s,background 0.2s;mix-blend-mode:difference; }
+  .cursor-ring{ width:36px;height:36px;border:1px solid var(--cyan);border-radius:50%;position:fixed;pointer-events:none;z-index:9998;transition:transform 0.15s;mix-blend-mode:difference; }
 
-  /* ── Custom cursor ─────────────────────────────────────── */
-  .cursor {
-    width: 12px; height: 12px;
-    background: var(--pink);
-    border-radius: 50%;
-    position: fixed;
-    pointer-events: none;
-    z-index: 9999;
-    transition: transform 0.1s, background 0.2s;
-    mix-blend-mode: difference;
-  }
-  .cursor-ring {
-    width: 36px; height: 36px;
-    border: 1px solid var(--cyan);
-    border-radius: 50%;
-    position: fixed;
-    pointer-events: none;
-    z-index: 9998;
-    transition: transform 0.15s, left 0.08s, top 0.08s;
-    mix-blend-mode: difference;
-  }
+  body::before { content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:0;opacity:0.4; }
 
-  /* ── Noise overlay ─────────────────────────────────────── */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 0;
-    opacity: 0.4;
-  }
+  /* NAV */
+  nav { position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:1.2rem 4rem;border-bottom:1px solid var(--border);background:rgba(5,5,8,0.85);backdrop-filter:blur(20px); }
+  .logo { font-size:1.4rem;font-weight:800;letter-spacing:-0.02em; }
+  .logo span { color:var(--pink); }
+  .nav-links { display:flex;gap:2rem;align-items:center; }
+  .nav-links a { color:var(--muted);text-decoration:none;font-size:0.9rem;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;transition:color 0.2s; }
+  .nav-links a:hover { color:var(--white); }
+  .nav-cta { background:var(--pink)!important;color:var(--black)!important;padding:0.5rem 1.2rem;border-radius:4px;font-weight:700!important;transition:opacity 0.2s!important; }
+  .nav-cta:hover { opacity:0.85; }
 
-  /* ── Nav ───────────────────────────────────────────────── */
-  nav {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 100;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.2rem 4rem;
-    border-bottom: 1px solid var(--border);
-    background: rgba(5,5,8,0.85);
-    backdrop-filter: blur(20px);
-  }
+  /* HERO */
+  .hero { min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:8rem 4rem 4rem;position:relative;overflow:hidden; }
+  .hero-glow { position:absolute;border-radius:50%;filter:blur(120px);opacity:0.15;pointer-events:none; }
+  .glow-pink  { background:var(--pink);width:600px;height:600px;top:-100px;left:-100px; }
+  .glow-cyan  { background:var(--cyan);width:600px;height:600px;bottom:-50px;right:-50px; }
+  .glow-lime  { background:var(--lime);width:300px;height:300px;top:40%;left:40%; }
 
-  .logo {
-    font-size: 1.4rem;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-  }
-  .logo span { color: var(--pink); }
+  .hero-tag { display:inline-flex;align-items:center;gap:0.5rem;font-family:'Space Mono',monospace;font-size:0.75rem;color:var(--lime);border:1px solid var(--lime);padding:0.35rem 0.8rem;border-radius:2px;margin-bottom:2rem;width:fit-content;animation:fadeUp 0.6s ease both; }
+  .hero-tag::before { content:'▶';font-size:0.6rem; }
 
-  .nav-links { display: flex; gap: 2rem; align-items: center; }
-  .nav-links a {
-    color: var(--muted);
-    text-decoration: none;
-    font-size: 0.9rem;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    transition: color 0.2s;
-  }
-  .nav-links a:hover { color: var(--white); }
-  .nav-cta {
-    background: var(--pink) !important;
-    color: var(--black) !important;
-    padding: 0.5rem 1.2rem;
-    border-radius: 4px;
-    font-weight: 700 !important;
-    transition: opacity 0.2s !important;
-  }
-  .nav-cta:hover { opacity: 0.85; }
+  h1 { font-size:clamp(3rem,8vw,7rem);font-weight:800;line-height:0.95;letter-spacing:-0.03em;max-width:900px;animation:fadeUp 0.6s 0.1s ease both; }
+  h1 .line-pink  { color:var(--pink);display:block; }
+  h1 .line-cyan  { color:var(--cyan);display:block; }
+  h1 .line-white { color:var(--white);display:block; }
 
-  /* ── Hero ──────────────────────────────────────────────── */
-  .hero {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    padding: 8rem 4rem 4rem;
-    position: relative;
-    overflow: hidden;
-  }
+  .hero-sub { margin-top:2rem;font-size:1.2rem;color:var(--muted);max-width:520px;line-height:1.6;font-weight:400;animation:fadeUp 0.6s 0.2s ease both; }
+  .hero-sub strong { color:var(--white);font-weight:600; }
 
-  .hero-glow {
-    position: absolute;
-    width: 600px; height: 600px;
-    border-radius: 50%;
-    filter: blur(120px);
-    opacity: 0.15;
-    pointer-events: none;
-  }
-  .glow-pink  { background: var(--pink);   top: -100px;  left: -100px; }
-  .glow-cyan  { background: var(--cyan);   bottom: -50px; right: -50px; }
-  .glow-lime  { background: var(--lime);   top: 40%;  left: 40%; width: 300px; height: 300px; }
+  .hero-actions { display:flex;gap:1rem;margin-top:3rem;flex-wrap:wrap;animation:fadeUp 0.6s 0.3s ease both; }
 
-  .hero-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-family: 'Space Mono', monospace;
-    font-size: 0.75rem;
-    color: var(--lime);
-    border: 1px solid var(--lime);
-    padding: 0.35rem 0.8rem;
-    border-radius: 2px;
-    margin-bottom: 2rem;
-    width: fit-content;
-    animation: fadeUp 0.6s ease both;
-  }
-  .hero-tag::before {
-    content: '▶';
-    font-size: 0.6rem;
-  }
+  .btn-primary { background:var(--pink);color:var(--black);padding:0.9rem 2rem;font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;border:none;border-radius:4px;cursor:none;text-decoration:none;display:inline-flex;align-items:center;gap:0.5rem;transition:transform 0.2s,box-shadow 0.2s; }
+  .btn-primary:hover { transform:translateY(-2px);box-shadow:0 8px 30px rgba(255,45,107,0.4); }
+  .btn-ghost { background:transparent;color:var(--white);padding:0.9rem 2rem;font-family:'Syne',sans-serif;font-size:1rem;font-weight:600;border:1px solid var(--border);border-radius:4px;cursor:none;text-decoration:none;display:inline-flex;align-items:center;gap:0.5rem;transition:border-color 0.2s,color 0.2s; }
+  .btn-ghost:hover { border-color:var(--cyan);color:var(--cyan); }
 
-  h1 {
-    font-size: clamp(3rem, 8vw, 7rem);
-    font-weight: 800;
-    line-height: 0.95;
-    letter-spacing: -0.03em;
-    max-width: 900px;
-    animation: fadeUp 0.6s 0.1s ease both;
-  }
-  h1 .line-pink  { color: var(--pink); display: block; }
-  h1 .line-cyan  { color: var(--cyan); display: block; }
-  h1 .line-white { color: var(--white); display: block; }
+  .stats { display:flex;gap:3rem;margin-top:5rem;padding-top:3rem;border-top:1px solid var(--border);flex-wrap:wrap;animation:fadeUp 0.6s 0.4s ease both; }
+  .stat-num { font-size:2.5rem;font-weight:800;line-height:1;background:linear-gradient(135deg,var(--cyan),var(--lime));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
+  .stat-label { font-size:0.85rem;color:var(--muted);margin-top:0.3rem;font-weight:600;text-transform:uppercase;letter-spacing:0.05em; }
 
-  .hero-sub {
-    margin-top: 2rem;
-    font-size: 1.2rem;
-    color: var(--muted);
-    max-width: 520px;
-    line-height: 1.6;
-    font-weight: 400;
-    animation: fadeUp 0.6s 0.2s ease both;
-  }
-  .hero-sub strong { color: var(--white); font-weight: 600; }
+  section { padding:6rem 4rem;position:relative;z-index:1; }
+  .section-tag { font-family:'Space Mono',monospace;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.15em;color:var(--pink);margin-bottom:1rem; }
+  h2 { font-size:clamp(2rem,4vw,3.5rem);font-weight:800;letter-spacing:-0.02em;line-height:1.05;max-width:700px; }
 
-  .hero-actions {
-    display: flex;
-    gap: 1rem;
-    margin-top: 3rem;
-    flex-wrap: wrap;
-    animation: fadeUp 0.6s 0.3s ease both;
-  }
+  /* HOW API WORKS */
+  .flow-diagram { margin-top:4rem;display:flex;flex-direction:column;gap:0; }
+  .flow-row { display:grid;grid-template-columns:1fr 60px 1fr;align-items:center;gap:0; }
+  .flow-box { background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.5rem;position:relative; }
+  .flow-box.highlight-pink  { border-color:rgba(255,45,107,0.4);background:linear-gradient(135deg,rgba(255,45,107,0.05),var(--card)); }
+  .flow-box.highlight-cyan  { border-color:rgba(0,245,255,0.3);background:linear-gradient(135deg,rgba(0,245,255,0.05),var(--card)); }
+  .flow-box.highlight-lime  { border-color:rgba(184,255,60,0.3);background:linear-gradient(135deg,rgba(184,255,60,0.05),var(--card)); }
+  .flow-arrow { text-align:center;font-size:1.5rem;color:var(--muted); }
+  .flow-label { font-family:'Space Mono',monospace;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.5rem; }
+  .flow-label.pink { color:var(--pink); }
+  .flow-label.cyan { color:var(--cyan); }
+  .flow-label.lime { color:var(--lime); }
+  .flow-label.muted { color:var(--muted); }
+  .flow-text { font-size:0.9rem;line-height:1.5;color:var(--white);font-weight:600; }
+  .flow-sub  { font-size:0.8rem;color:var(--muted);margin-top:0.3rem; }
+  .flow-connector { display:flex;justify-content:center;padding:0.5rem 0; }
+  .flow-connector-line { width:2px;height:32px;background:linear-gradient(to bottom,var(--border),var(--pink)); }
 
-  .btn-primary {
-    background: var(--pink);
-    color: var(--black);
-    padding: 0.9rem 2rem;
-    font-family: 'Syne', sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
-    border: none;
-    border-radius: 4px;
-    cursor: none;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: transform 0.2s, box-shadow 0.2s;
-  }
-  .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 30px rgba(255,45,107,0.4);
-  }
+  .code-example { margin-top:4rem;background:#080810;border:1px solid var(--border);border-radius:8px;overflow:hidden; }
+  .code-tabs { display:flex;border-bottom:1px solid var(--border); }
+  .code-tab { padding:0.75rem 1.5rem;font-family:'Space Mono',monospace;font-size:0.75rem;cursor:none;color:var(--muted);border-bottom:2px solid transparent;transition:color 0.2s,border-color 0.2s;background:none;border-top:none;border-left:none;border-right:none; }
+  .code-tab.active { color:var(--pink);border-bottom-color:var(--pink); }
+  .code-content { display:none;padding:1.5rem; }
+  .code-content.active { display:block; }
+  pre { font-family:'Space Mono',monospace;font-size:0.78rem;line-height:1.7;color:#cdd6f4;overflow-x:auto; }
+  .kw{color:var(--pink)}.fn{color:var(--cyan)}.str{color:var(--lime)}.cm{color:#585b70}.var{color:#cba6f7}
 
-  .btn-ghost {
-    background: transparent;
-    color: var(--white);
-    padding: 0.9rem 2rem;
-    font-family: 'Syne', sans-serif;
-    font-size: 1rem;
-    font-weight: 600;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    cursor: none;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: border-color 0.2s, color 0.2s;
-  }
-  .btn-ghost:hover { border-color: var(--cyan); color: var(--cyan); }
+  /* BEFORE/AFTER */
+  .before-after { display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:4rem; }
+  .ba-card { background:var(--card);border:1px solid var(--border);border-radius:8px;padding:2rem;position:relative;overflow:hidden; }
+  .ba-card.bad  { border-color:#ff2d2d33; }
+  .ba-card.good { border-color:#b8ff3c33; }
+  .ba-label { font-family:'Space Mono',monospace;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:1.5rem;display:flex;align-items:center;gap:0.5rem; }
+  .ba-card.bad  .ba-label { color:#ff6b6b; }
+  .ba-card.good .ba-label { color:var(--lime); }
+  .ba-item { display:flex;gap:0.75rem;align-items:flex-start;margin-bottom:1rem;font-size:0.95rem;line-height:1.5;color:var(--muted); }
+  .ba-item .icon { flex-shrink:0;font-size:1rem;margin-top:0.1rem; }
+  .ba-card.bad  .ba-item .icon { color:#ff6b6b; }
+  .ba-card.good .ba-item .icon { color:var(--lime); }
+  .ba-card.good .ba-item { color:var(--white); }
 
-  /* ── Stats bar ─────────────────────────────────────────── */
-  .stats {
-    display: flex;
-    gap: 3rem;
-    margin-top: 5rem;
-    padding-top: 3rem;
-    border-top: 1px solid var(--border);
-    flex-wrap: wrap;
-    animation: fadeUp 0.6s 0.4s ease both;
-  }
-  .stat-item {}
-  .stat-num {
-    font-size: 2.5rem;
-    font-weight: 800;
-    line-height: 1;
-    background: linear-gradient(135deg, var(--cyan), var(--lime));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-  .stat-label { font-size: 0.85rem; color: var(--muted); margin-top: 0.3rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+  /* STEPS */
+  .steps { display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:4rem; }
+  .step-card { background:var(--card);border:1px solid var(--border);border-radius:8px;padding:2rem;transition:border-color 0.3s,transform 0.3s; }
+  .step-card:hover { border-color:var(--pink);transform:translateY(-4px); }
+  .step-num { font-family:'Space Mono',monospace;font-size:3rem;font-weight:700;line-height:1;background:linear-gradient(135deg,var(--pink),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:1.2rem; }
+  .step-title { font-size:1.1rem;font-weight:700;margin-bottom:0.75rem; }
+  .step-desc  { font-size:0.9rem;color:var(--muted);line-height:1.6; }
 
-  /* ── Problem section ───────────────────────────────────── */
-  section { padding: 6rem 4rem; position: relative; z-index: 1; }
+  /* PRICING */
+  .pricing-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:4rem; }
+  .price-card { background:var(--card);border:1px solid var(--border);border-radius:8px;padding:2rem;position:relative;transition:transform 0.3s; }
+  .price-card:hover { transform:translateY(-4px); }
+  .price-card.featured { border-color:var(--pink);background:linear-gradient(135deg,#1a0810,#0e0814); }
+  .price-card.featured::before { content:'MOST POPULAR';position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:var(--pink);color:var(--black);font-family:'Space Mono',monospace;font-size:0.65rem;font-weight:700;padding:0.25rem 0.75rem;border-radius:0 0 4px 4px;letter-spacing:0.1em; }
+  .price-name   { font-size:0.8rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);font-weight:700;margin-bottom:1rem;font-family:'Space Mono',monospace; }
+  .price-amount { font-size:3rem;font-weight:800;line-height:1;margin-bottom:0.3rem; }
+  .price-amount.free { color:var(--lime); }
+  .price-amount.pro  { color:var(--pink); }
+  .price-amount.ent  { color:var(--cyan); }
+  .price-period { font-size:0.85rem;color:var(--muted);margin-bottom:2rem; }
+  .price-features { list-style:none;display:flex;flex-direction:column;gap:0.75rem;margin-bottom:2rem; }
+  .price-features li { font-size:0.9rem;display:flex;gap:0.6rem;align-items:center; }
+  .price-features li::before { content:'—';color:var(--pink);font-family:'Space Mono',monospace; }
+  .price-btn { width:100%;padding:0.8rem;border-radius:4px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;cursor:none;transition:opacity 0.2s,transform 0.2s;border:none; }
+  .price-btn:hover { opacity:0.85;transform:translateY(-1px); }
+  .price-btn.solid   { background:var(--pink);color:var(--black); }
+  .price-btn.outline { background:transparent;border:1px solid var(--border);color:var(--white); }
+  .price-btn.cyan-btn { background:var(--cyan);color:var(--black); }
 
-  .section-tag {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    color: var(--pink);
-    margin-bottom: 1rem;
-  }
+  /* GET KEY */
+  .get-key-section { background:linear-gradient(135deg,#0e0814,#080e14);border-top:1px solid var(--border);text-align:center; }
+  .key-box { max-width:560px;margin:3rem auto 0;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:2.5rem;position:relative; }
+  .key-box::before { content:'';position:absolute;inset:-1px;border-radius:12px;background:linear-gradient(135deg,var(--pink),var(--cyan),var(--lime));z-index:-1;opacity:0.3; }
+  .key-form { display:flex;flex-direction:column;gap:1rem; }
+  .input-row { display:flex;gap:0.75rem; }
+  .key-input { flex:1;background:#080810;border:1px solid var(--border);border-radius:6px;padding:0.85rem 1.2rem;font-family:'Syne',sans-serif;font-size:0.95rem;color:var(--white);outline:none;transition:border-color 0.2s;cursor:none; }
+  .key-input:focus { border-color:var(--pink); }
+  .key-input::placeholder { color:var(--muted); }
+  .key-btn { background:var(--pink);color:var(--black);border:none;border-radius:6px;padding:0.85rem 1.5rem;font-family:'Syne',sans-serif;font-size:0.95rem;font-weight:700;cursor:none;white-space:nowrap;transition:transform 0.2s,box-shadow 0.2s;min-width:140px; }
+  .key-btn:hover { transform:translateY(-2px);box-shadow:0 6px 24px rgba(255,45,107,0.4); }
+  .key-btn:disabled { opacity:0.6; }
+  .key-result { display:none;background:#080810;border:1px solid rgba(184,255,60,0.3);border-radius:6px;padding:1rem 1.2rem;text-align:left; }
+  .key-result.show { display:block;animation:fadeUp 0.4s ease both; }
+  .key-result-label { font-family:'Space Mono',monospace;font-size:0.7rem;color:var(--lime);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.5rem; }
+  .key-result-value { font-family:'Space Mono',monospace;font-size:0.85rem;color:var(--white);word-break:break-all; }
+  .key-error { display:none;color:#ff6b6b;font-size:0.85rem;font-family:'Space Mono',monospace; }
+  .key-error.show { display:block;animation:fadeUp 0.3s ease both; }
+  .key-note { font-size:0.8rem;color:var(--muted);margin-top:1rem; }
 
-  h2 {
-    font-size: clamp(2rem, 4vw, 3.5rem);
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    line-height: 1.05;
-    max-width: 700px;
-  }
+  /* PAYMENT MODAL */
+  .modal-overlay { display:none;position:fixed;inset:0;background:rgba(5,5,8,0.92);z-index:1000;backdrop-filter:blur(12px);align-items:center;justify-content:center; }
+  .modal-overlay.open { display:flex;animation:fadeIn 0.25s ease both; }
 
-  /* ── Before/after ──────────────────────────────────────── */
-  .before-after {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    margin-top: 4rem;
-  }
+  .modal { background:var(--card);border:1px solid var(--border);border-radius:16px;width:100%;max-width:480px;padding:2.5rem;position:relative;animation:slideUp 0.3s ease both;margin:1rem; }
+  .modal.pro-modal  { border-color:rgba(255,45,107,0.4); }
+  .modal.ent-modal  { border-color:rgba(0,245,255,0.3); }
 
-  .ba-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 2rem;
-    position: relative;
-    overflow: hidden;
-  }
-  .ba-card.bad  { border-color: #ff2d2d33; }
-  .ba-card.good { border-color: #b8ff3c33; }
-  .ba-card.good::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(184,255,60,0.03), transparent);
-    pointer-events: none;
-  }
+  .modal-close { position:absolute;top:1.2rem;right:1.2rem;background:none;border:none;color:var(--muted);font-size:1.3rem;cursor:none;line-height:1;transition:color 0.2s; }
+  .modal-close:hover { color:var(--white); }
 
-  .ba-label {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.7rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  .ba-card.bad  .ba-label { color: #ff6b6b; }
-  .ba-card.good .ba-label { color: var(--lime); }
+  .modal-badge { display:inline-flex;align-items:center;gap:0.4rem;font-family:'Space Mono',monospace;font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;padding:0.3rem 0.7rem;border-radius:3px;margin-bottom:1.5rem; }
+  .modal-badge.pink { background:rgba(255,45,107,0.15);color:var(--pink);border:1px solid rgba(255,45,107,0.3); }
+  .modal-badge.cyan { background:rgba(0,245,255,0.1);color:var(--cyan);border:1px solid rgba(0,245,255,0.2); }
 
-  .ba-item {
-    display: flex;
-    gap: 0.75rem;
-    align-items: flex-start;
-    margin-bottom: 1rem;
-    font-size: 0.95rem;
-    line-height: 1.5;
-    color: var(--muted);
-  }
-  .ba-item .icon { flex-shrink: 0; font-size: 1rem; margin-top: 0.1rem; }
-  .ba-card.bad  .ba-item .icon { color: #ff6b6b; }
-  .ba-card.good .ba-item .icon { color: var(--lime); }
-  .ba-card.good .ba-item { color: var(--white); }
+  .modal h3 { font-size:1.8rem;font-weight:800;letter-spacing:-0.02em;margin-bottom:0.5rem; }
+  .modal-price { font-size:1rem;color:var(--muted);margin-bottom:2rem; }
+  .modal-price strong { color:var(--white); }
 
-  /* ── How it works ──────────────────────────────────────── */
-  .steps {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
-    margin-top: 4rem;
-  }
+  .modal-features { list-style:none;display:flex;flex-direction:column;gap:0.6rem;margin-bottom:2rem; }
+  .modal-features li { font-size:0.9rem;display:flex;gap:0.6rem;align-items:center;color:var(--muted); }
+  .modal-features li::before { content:'✓';color:var(--lime);font-family:'Space Mono',monospace;font-weight:700;flex-shrink:0; }
 
-  .step-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 2rem;
-    position: relative;
-    transition: border-color 0.3s, transform 0.3s;
-  }
-  .step-card:hover { border-color: var(--pink); transform: translateY(-4px); }
+  .modal-divider { border:none;border-top:1px solid var(--border);margin:1.5rem 0; }
 
-  .step-num {
-    font-family: 'Space Mono', monospace;
-    font-size: 3rem;
-    font-weight: 700;
-    line-height: 1;
-    background: linear-gradient(135deg, var(--pink), var(--purple));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 1.2rem;
-  }
-  .step-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.75rem; }
-  .step-desc  { font-size: 0.9rem; color: var(--muted); line-height: 1.6; }
+  .modal-form { display:flex;flex-direction:column;gap:1rem; }
+  .modal-input { background:#080810;border:1px solid var(--border);border-radius:6px;padding:0.85rem 1.2rem;font-family:'Syne',sans-serif;font-size:0.95rem;color:var(--white);outline:none;transition:border-color 0.2s;width:100%;cursor:none; }
+  .modal-input:focus { border-color:var(--pink); }
+  .modal-input::placeholder { color:var(--muted); }
+  .modal-input.cyan-focus:focus { border-color:var(--cyan); }
 
-  /* ── Code section ──────────────────────────────────────── */
-  .code-section {
-    background: linear-gradient(135deg, #0a0a12, #0e0814);
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-  }
+  .modal-submit { width:100%;padding:0.9rem;border:none;border-radius:6px;font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;cursor:none;transition:transform 0.2s,box-shadow 0.2s; }
+  .modal-submit:hover { transform:translateY(-2px); }
+  .modal-submit.pink-btn { background:var(--pink);color:var(--black); }
+  .modal-submit.pink-btn:hover { box-shadow:0 6px 24px rgba(255,45,107,0.4); }
+  .modal-submit.cyan-btn-full { background:var(--cyan);color:var(--black); }
+  .modal-submit.cyan-btn-full:hover { box-shadow:0 6px 24px rgba(0,245,255,0.3); }
 
-  .code-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4rem;
-    align-items: center;
-    margin-top: 3rem;
-  }
+  .modal-note { font-size:0.78rem;color:var(--muted);text-align:center;margin-top:0.5rem;font-family:'Space Mono',monospace; }
 
-  .code-block {
-    background: #080810;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    overflow: hidden;
-  }
+  .modal-success { display:none;text-align:center;padding:1rem 0; }
+  .modal-success.show { display:block;animation:fadeUp 0.4s ease both; }
+  .success-icon { font-size:3rem;margin-bottom:1rem; }
+  .success-title { font-size:1.3rem;font-weight:800;margin-bottom:0.5rem; }
+  .success-text  { font-size:0.9rem;color:var(--muted);line-height:1.6; }
 
-  .code-header {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.8rem 1.2rem;
-    border-bottom: 1px solid var(--border);
-    background: #0c0c18;
-  }
-  .code-dot {
-    width: 10px; height: 10px;
-    border-radius: 50%;
-  }
-  .code-dot.red    { background: #ff5f57; }
-  .code-dot.yellow { background: #ffbd2e; }
-  .code-dot.green  { background: #28ca42; }
-  .code-filename {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.72rem;
-    color: var(--muted);
-    margin-left: 0.5rem;
-  }
+  .modal-error { display:none;color:#ff6b6b;font-size:0.82rem;font-family:'Space Mono',monospace;text-align:center; }
+  .modal-error.show { display:block; }
 
-  pre {
-    padding: 1.5rem;
-    font-family: 'Space Mono', monospace;
-    font-size: 0.78rem;
-    line-height: 1.7;
-    overflow-x: auto;
-    color: #cdd6f4;
-  }
-  .kw  { color: var(--pink); }
-  .fn  { color: var(--cyan); }
-  .str { color: var(--lime); }
-  .cm  { color: #585b70; }
-  .var { color: #cba6f7; }
+  .stripe-note { display:flex;align-items:center;justify-content:center;gap:0.4rem;font-size:0.75rem;color:var(--muted);margin-top:0.75rem;font-family:'Space Mono',monospace; }
+  .stripe-note::before { content:'🔒'; }
 
-  .code-points { list-style: none; display: flex; flex-direction: column; gap: 1.5rem; }
-  .code-point {
-    display: flex;
-    gap: 1rem;
-    align-items: flex-start;
-  }
-  .cp-icon {
-    width: 36px; height: 36px;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1rem;
-    flex-shrink: 0;
-  }
-  .cp-icon.pink   { background: rgba(255,45,107,0.15); color: var(--pink); }
-  .cp-icon.cyan   { background: rgba(0,245,255,0.1);  color: var(--cyan); }
-  .cp-icon.lime   { background: rgba(184,255,60,0.1); color: var(--lime); }
-  .cp-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.3rem; }
-  .cp-desc  { font-size: 0.85rem; color: var(--muted); line-height: 1.5; }
+  /* FOOTER */
+  footer { padding:3rem 4rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem; }
+  .footer-logo { font-size:1.2rem;font-weight:800; }
+  .footer-logo span { color:var(--pink); }
+  .footer-copy { font-size:0.8rem;color:var(--muted);font-family:'Space Mono',monospace; }
+  .footer-links { display:flex;gap:1.5rem; }
+  .footer-links a { font-size:0.85rem;color:var(--muted);text-decoration:none;transition:color 0.2s; }
+  .footer-links a:hover { color:var(--white); }
 
-  /* ── Pricing ───────────────────────────────────────────── */
-  .pricing-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
-    margin-top: 4rem;
-  }
+  /* ANIMATIONS */
+  @keyframes fadeUp  { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes fadeIn  { from{opacity:0} to{opacity:1} }
+  @keyframes slideUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes pulse   { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
-  .price-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 2rem;
-    position: relative;
-    transition: transform 0.3s;
-  }
-  .price-card:hover { transform: translateY(-4px); }
-  .price-card.featured {
-    border-color: var(--pink);
-    background: linear-gradient(135deg, #1a0810, #0e0814);
-  }
-  .price-card.featured::before {
-    content: 'MOST POPULAR';
-    position: absolute;
-    top: -1px; left: 50%; transform: translateX(-50%);
-    background: var(--pink);
-    color: var(--black);
-    font-family: 'Space Mono', monospace;
-    font-size: 0.65rem;
-    font-weight: 700;
-    padding: 0.25rem 0.75rem;
-    border-radius: 0 0 4px 4px;
-    letter-spacing: 0.1em;
-  }
+  .live-dot { width:8px;height:8px;background:var(--lime);border-radius:50%;display:inline-block;animation:pulse 2s infinite; }
+  .code-section { background:linear-gradient(135deg,#0a0a12,#0e0814);border-top:1px solid var(--border);border-bottom:1px solid var(--border); }
 
-  .price-name  { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); font-weight: 700; margin-bottom: 1rem; font-family: 'Space Mono', monospace; }
-  .price-amount {
-    font-size: 3rem;
-    font-weight: 800;
-    line-height: 1;
-    margin-bottom: 0.3rem;
-  }
-  .price-amount.free { color: var(--lime); }
-  .price-amount.pro  { color: var(--pink); }
-  .price-amount.ent  { color: var(--cyan); }
-  .price-period { font-size: 0.85rem; color: var(--muted); margin-bottom: 2rem; }
-  .price-features { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 2rem; }
-  .price-features li { font-size: 0.9rem; display: flex; gap: 0.6rem; align-items: center; }
-  .price-features li::before { content: '—'; color: var(--pink); font-family: 'Space Mono', monospace; }
-  .price-btn {
-    width: 100%;
-    padding: 0.8rem;
-    border-radius: 4px;
-    font-family: 'Syne', sans-serif;
-    font-weight: 700;
-    font-size: 0.9rem;
-    cursor: none;
-    transition: opacity 0.2s, transform 0.2s;
-    border: none;
-  }
-  .price-btn:hover { opacity: 0.85; transform: translateY(-1px); }
-  .price-btn.solid { background: var(--pink); color: var(--black); }
-  .price-btn.outline { background: transparent; border: 1px solid var(--border); color: var(--white); }
-
-  /* ── Get API Key ───────────────────────────────────────── */
-  .get-key-section {
-    background: linear-gradient(135deg, #0e0814, #080e14);
-    border-top: 1px solid var(--border);
-    text-align: center;
-  }
-
-  .key-box {
-    max-width: 560px;
-    margin: 3rem auto 0;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 2.5rem;
-    position: relative;
-  }
-  .key-box::before {
-    content: '';
-    position: absolute;
-    inset: -1px;
-    border-radius: 12px;
-    background: linear-gradient(135deg, var(--pink), var(--cyan), var(--lime));
-    z-index: -1;
-    opacity: 0.3;
-  }
-
-  .key-form { display: flex; flex-direction: column; gap: 1rem; }
-
-  .input-row {
-    display: flex;
-    gap: 0.75rem;
-  }
-
-  .key-input {
-    flex: 1;
-    background: #080810;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 0.85rem 1.2rem;
-    font-family: 'Syne', sans-serif;
-    font-size: 0.95rem;
-    color: var(--white);
-    outline: none;
-    transition: border-color 0.2s;
-    cursor: none;
-  }
-  .key-input:focus { border-color: var(--pink); }
-  .key-input::placeholder { color: var(--muted); }
-
-  .key-btn {
-    background: var(--pink);
-    color: var(--black);
-    border: none;
-    border-radius: 6px;
-    padding: 0.85rem 1.5rem;
-    font-family: 'Syne', sans-serif;
-    font-size: 0.95rem;
-    font-weight: 700;
-    cursor: none;
-    white-space: nowrap;
-    transition: transform 0.2s, box-shadow 0.2s;
-    min-width: 140px;
-  }
-  .key-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(255,45,107,0.4); }
-  .key-btn:disabled { opacity: 0.6; }
-
-  .key-result {
-    display: none;
-    background: #080810;
-    border: 1px solid rgba(184,255,60,0.3);
-    border-radius: 6px;
-    padding: 1rem 1.2rem;
-    text-align: left;
-  }
-  .key-result.show { display: block; animation: fadeUp 0.4s ease both; }
-  .key-result-label { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--lime); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; }
-  .key-result-value { font-family: 'Space Mono', monospace; font-size: 0.85rem; color: var(--white); word-break: break-all; }
-
-  .key-error {
-    display: none;
-    color: #ff6b6b;
-    font-size: 0.85rem;
-    font-family: 'Space Mono', monospace;
-  }
-  .key-error.show { display: block; animation: fadeUp 0.3s ease both; }
-
-  .key-note { font-size: 0.8rem; color: var(--muted); margin-top: 1rem; }
-
-  /* ── Footer ────────────────────────────────────────────── */
-  footer {
-    padding: 3rem 4rem;
-    border-top: 1px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
-  }
-  .footer-logo { font-size: 1.2rem; font-weight: 800; }
-  .footer-logo span { color: var(--pink); }
-  .footer-copy { font-size: 0.8rem; color: var(--muted); font-family: 'Space Mono', monospace; }
-  .footer-links { display: flex; gap: 1.5rem; }
-  .footer-links a { font-size: 0.85rem; color: var(--muted); text-decoration: none; transition: color 0.2s; }
-  .footer-links a:hover { color: var(--white); }
-
-  /* ── Animations ────────────────────────────────────────── */
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
-  }
-
-  .live-dot {
-    width: 8px; height: 8px;
-    background: var(--lime);
-    border-radius: 50%;
-    display: inline-block;
-    animation: pulse 2s infinite;
-  }
-
-  /* ── Responsive ────────────────────────────────────────── */
-  @media (max-width: 900px) {
-    nav { padding: 1rem 1.5rem; }
-    .nav-links { display: none; }
-    section { padding: 4rem 1.5rem; }
-    .hero { padding: 7rem 1.5rem 3rem; }
-    .before-after, .steps, .code-grid, .pricing-grid { grid-template-columns: 1fr; }
-    .stats { gap: 1.5rem; }
-    footer { padding: 2rem 1.5rem; flex-direction: column; text-align: center; }
-    .input-row { flex-direction: column; }
+  @media(max-width:900px){
+    nav{padding:1rem 1.5rem}
+    .nav-links{display:none}
+    section{padding:4rem 1.5rem}
+    .hero{padding:7rem 1.5rem 3rem}
+    .before-after,.steps,.pricing-grid,.flow-row{grid-template-columns:1fr}
+    .flow-arrow{display:none}
+    .stats{gap:1.5rem}
+    footer{padding:2rem 1.5rem;flex-direction:column;text-align:center}
+    .input-row{flex-direction:column}
   }
 </style>
 </head>
 <body>
 
-<!-- Custom cursor -->
 <div class="cursor" id="cursor"></div>
 <div class="cursor-ring" id="cursorRing"></div>
 
-<!-- Nav -->
+<!-- PRO PAYMENT MODAL -->
+<div class="modal-overlay" id="proModal">
+  <div class="modal pro-modal">
+    <button class="modal-close" onclick="closeModal('proModal')">✕</button>
+    <div id="proFormSection">
+      <div class="modal-badge pink">⚡ Pro Plan</div>
+      <h3>Upgrade to Pro</h3>
+      <p class="modal-price">$29<strong>/month</strong> — cancel anytime</p>
+      <ul class="modal-features">
+        <li>500,000 API calls per month</li>
+        <li>Unlimited users &amp; memory storage</li>
+        <li>Priority response time</li>
+        <li>Usage dashboard</li>
+        <li>Email support within 24h</li>
+      </ul>
+      <hr class="modal-divider">
+      <div class="modal-form">
+        <input type="email" class="modal-input" id="proEmail" placeholder="Your email address" autocomplete="email"/>
+        <input type="text"  class="modal-input" id="proName"  placeholder="Your name (optional)"/>
+        <button class="modal-submit pink-btn" onclick="submitPro()">Continue to payment →</button>
+        <div class="modal-error" id="proError"></div>
+        <p class="modal-note">Secure checkout via Stripe</p>
+        <div class="stripe-note">256-bit SSL encryption · No card stored here</div>
+      </div>
+    </div>
+    <div class="modal-success" id="proSuccess">
+      <div class="success-icon">⚡</div>
+      <div class="success-title">Redirecting to checkout...</div>
+      <div class="success-text">You'll be taken to our secure Stripe payment page. Your Pro access activates instantly after payment.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ENTERPRISE CONTACT MODAL -->
+<div class="modal-overlay" id="entModal">
+  <div class="modal ent-modal">
+    <button class="modal-close" onclick="closeModal('entModal')">✕</button>
+    <div id="entFormSection">
+      <div class="modal-badge cyan">🏢 Enterprise</div>
+      <h3>Let's talk Enterprise</h3>
+      <p class="modal-price">Custom pricing for <strong>high-volume teams</strong></p>
+      <ul class="modal-features">
+        <li>Unlimited API calls</li>
+        <li>Dedicated infrastructure</li>
+        <li>Custom memory schemas for your vertical</li>
+        <li>99.9% SLA uptime guarantee</li>
+        <li>Slack support channel</li>
+        <li>Custom onboarding &amp; integration help</li>
+      </ul>
+      <hr class="modal-divider">
+      <div class="modal-form">
+        <input type="email" class="modal-input modal-input cyan-focus" id="entEmail"   placeholder="Work email address" autocomplete="email"/>
+        <input type="text"  class="modal-input modal-input cyan-focus" id="entCompany" placeholder="Company name"/>
+        <input type="text"  class="modal-input modal-input cyan-focus" id="entVolume"  placeholder="Estimated monthly API calls"/>
+        <button class="modal-submit cyan-btn-full" onclick="submitEnterprise()">Send enquiry →</button>
+        <div class="modal-error" id="entError"></div>
+        <p class="modal-note">We reply within 24 hours</p>
+      </div>
+    </div>
+    <div class="modal-success" id="entSuccess">
+      <div class="success-icon">🚀</div>
+      <div class="success-title">Enquiry sent!</div>
+      <div class="success-text">We'll reach out to <span id="entEmailConfirm"></span> within 24 hours with a custom quote and next steps.</div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
 <nav>
   <div class="logo">Magno<span>API</span></div>
   <div class="nav-links">
-    <a href="#how">How it works</a>
+    <a href="#how-works">How it works</a>
     <a href="#pricing">Pricing</a>
     <a href="https://magno-memory-api-production.up.railway.app/docs" target="_blank">Docs</a>
     <a href="#get-key" class="nav-cta">Get API Key</a>
   </div>
 </nav>
 
-<!-- Hero -->
+<!-- HERO -->
 <section class="hero">
   <div class="hero-glow glow-pink"></div>
   <div class="hero-glow glow-cyan"></div>
   <div class="hero-glow glow-lime"></div>
-
   <div class="hero-tag"><span class="live-dot"></span> Live API — Free to start</div>
-
   <h1>
     <span class="line-white">Your AI app</span>
     <span class="line-pink">remembers</span>
     <span class="line-cyan">everything.</span>
   </h1>
-
-  <p class="hero-sub">
-    MagnoAPI gives any AI app <strong>persistent memory</strong> across conversations.
-    Two API calls. Works with Claude, GPT, Gemini — any LLM.
-    No infrastructure to manage.
-  </p>
-
+  <p class="hero-sub">MagnoAPI gives any AI app <strong>persistent memory</strong> across conversations. Two API calls. Works with Claude, GPT, Gemini — any LLM. No infrastructure to manage.</p>
   <div class="hero-actions">
     <a href="#get-key" class="btn-primary">Get free API key →</a>
     <a href="https://magno-memory-api-production.up.railway.app/docs" target="_blank" class="btn-ghost">View docs</a>
   </div>
-
   <div class="stats">
-    <div class="stat-item">
-      <div class="stat-num">2</div>
-      <div class="stat-label">API endpoints</div>
+    <div class="stat-item"><div class="stat-num">2</div><div class="stat-label">API endpoints</div></div>
+    <div class="stat-item"><div class="stat-num">1K</div><div class="stat-label">Free calls/month</div></div>
+    <div class="stat-item"><div class="stat-num">&lt;100ms</div><div class="stat-label">Avg response time</div></div>
+    <div class="stat-item"><div class="stat-num">∞</div><div class="stat-label">LLMs supported</div></div>
+  </div>
+</section>
+
+<!-- HOW THE API WORKS -->
+<section id="how-works" class="code-section">
+  <div class="section-tag">// how developers use it</div>
+  <h2>Drop two calls around your LLM. Done.</h2>
+  <p style="color:var(--muted);margin-top:1rem;max-width:560px;line-height:1.6">Every request to your AI app follows this exact flow. MagnoAPI sits invisibly between your app and any LLM, giving it memory without changing how you call the LLM.</p>
+
+  <div class="flow-diagram" style="margin-top:3rem;max-width:800px">
+    <div class="flow-row">
+      <div class="flow-box"><div class="flow-label muted">User</div><div class="flow-text">Sends a message to your app</div><div class="flow-sub">"What Python framework should I use?"</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box highlight-pink"><div class="flow-label pink">① MagnoAPI Search</div><div class="flow-text">POST /memory/search</div><div class="flow-sub">Fetches relevant past context for this user</div></div>
     </div>
-    <div class="stat-item">
-      <div class="stat-num">1K</div>
-      <div class="stat-label">Free calls/month</div>
+    <div class="flow-connector"><div class="flow-connector-line"></div></div>
+    <div class="flow-row">
+      <div class="flow-box highlight-cyan"><div class="flow-label cyan">② Your LLM Call</div><div class="flow-text">Claude / GPT / Gemini</div><div class="flow-sub">Prompt = past memories + user message. LLM now "remembers".</div></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-box highlight-lime"><div class="flow-label lime">③ MagnoAPI Store</div><div class="flow-text">POST /memory/store</div><div class="flow-sub">Saves this conversation for next time</div></div>
     </div>
-    <div class="stat-item">
-      <div class="stat-num">&lt;100ms</div>
-      <div class="stat-label">Avg response time</div>
+  </div>
+
+  <div class="code-example" style="margin-top:3rem;max-width:800px">
+    <div class="code-tabs">
+      <button class="code-tab active" onclick="switchTab('python')">Python</button>
+      <button class="code-tab" onclick="switchTab('js')">JavaScript</button>
+      <button class="code-tab" onclick="switchTab('curl')">cURL</button>
     </div>
-    <div class="stat-item">
-      <div class="stat-num">∞</div>
-      <div class="stat-label">LLMs supported</div>
+    <div class="code-content active" id="tab-python">
+<pre><span class="cm"># ① Before calling your LLM — fetch relevant memories</span>
+<span class="var">memories</span> = requests.post(
+    <span class="str">"https://magno-memory-api-production.up.railway.app/memory/search"</span>,
+    headers={<span class="str">"X-API-Key"</span>: <span class="str">"magno_sk_your_key"</span>},
+    json={<span class="str">"user_id"</span>: <span class="str">"user_123"</span>, <span class="str">"query"</span>: user_message, <span class="str">"top_k"</span>: 3}
+).json()[<span class="str">"results"</span>]
+
+<span class="cm"># Build enriched prompt</span>
+<span class="var">context</span> = <span class="str">"\n"</span>.join([m[<span class="str">"text"</span>] <span class="kw">for</span> m <span class="kw">in</span> memories])
+<span class="var">prompt</span>  = <span class="fn">f</span><span class="str">"Past context:\n{context}\n\nUser: {user_message}"</span>
+
+<span class="cm"># Call your LLM exactly as you normally would</span>
+<span class="var">response</span> = anthropic.messages.create(model=<span class="str">"claude-sonnet-4-20250514"</span>,
+    messages=[{<span class="str">"role"</span>:<span class="str">"user"</span>, <span class="str">"content"</span>: prompt}])
+
+<span class="cm"># ② After LLM responds — store this exchange</span>
+requests.post(
+    <span class="str">"https://magno-memory-api-production.up.railway.app/memory/store"</span>,
+    headers={<span class="str">"X-API-Key"</span>: <span class="str">"magno_sk_your_key"</span>},
+    json={<span class="str">"user_id"</span>: <span class="str">"user_123"</span>, <span class="str">"text"</span>: <span class="fn">f</span><span class="str">"User asked: {user_message}"</span>}
+)</pre>
+    </div>
+    <div class="code-content" id="tab-js">
+<pre><span class="cm">// ① Before calling your LLM — fetch relevant memories</span>
+<span class="kw">const</span> <span class="var">res</span> = <span class="kw">await</span> fetch(<span class="str">'https://magno-memory-api-production.up.railway.app/memory/search'</span>, {
+  method: <span class="str">'POST'</span>,
+  headers: { <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span>, <span class="str">'X-API-Key'</span>: <span class="str">'magno_sk_your_key'</span> },
+  body: JSON.stringify({ user_id: <span class="str">'user_123'</span>, query: userMessage, top_k: 3 })
+});
+<span class="kw">const</span> <span class="var">memories</span> = (<span class="kw">await</span> res.json()).results;
+
+<span class="cm">// Build enriched prompt</span>
+<span class="kw">const</span> <span class="var">context</span> = memories.map(m => m.text).join(<span class="str">'\n'</span>);
+<span class="kw">const</span> <span class="var">prompt</span>  = <span class="str">`Past context:\n${context}\n\nUser: ${userMessage}`</span>;
+
+<span class="cm">// ② After LLM responds — store this exchange</span>
+<span class="kw">await</span> fetch(<span class="str">'https://magno-memory-api-production.up.railway.app/memory/store'</span>, {
+  method: <span class="str">'POST'</span>,
+  headers: { <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span>, <span class="str">'X-API-Key'</span>: <span class="str">'magno_sk_your_key'</span> },
+  body: JSON.stringify({ user_id: <span class="str">'user_123'</span>, text: <span class="str">`User asked: ${userMessage}`</span> })
+});</pre>
+    </div>
+    <div class="code-content" id="tab-curl">
+<pre><span class="cm"># ① Search memories before your LLM call</span>
+curl -X POST \
+  https://magno-memory-api-production.up.railway.app/memory/search \
+  -H <span class="str">'X-API-Key: magno_sk_your_key'</span> \
+  -H <span class="str">'Content-Type: application/json'</span> \
+  -d <span class="str">'{"user_id":"user_123","query":"your message","top_k":3}'</span>
+
+<span class="cm"># ② Store memory after your LLM responds</span>
+curl -X POST \
+  https://magno-memory-api-production.up.railway.app/memory/store \
+  -H <span class="str">'X-API-Key: magno_sk_your_key'</span> \
+  -H <span class="str">'Content-Type: application/json'</span> \
+  -d <span class="str">'{"user_id":"user_123","text":"User asked about frameworks"}'</span></pre>
     </div>
   </div>
 </section>
 
-<!-- Problem -->
+<!-- PROBLEM -->
 <section>
   <div class="section-tag">// the problem</div>
   <h2>Every AI conversation starts from zero. That ends now.</h2>
-
   <div class="before-after">
     <div class="ba-card bad">
       <div class="ba-label">✕ Without MagnoAPI</div>
@@ -710,11 +459,10 @@
   </div>
 </section>
 
-<!-- How it works -->
+<!-- HOW IT WORKS - 3 STEPS -->
 <section id="how">
-  <div class="section-tag">// how it works</div>
+  <div class="section-tag">// getting started</div>
   <h2>Three steps. Seriously, that's it.</h2>
-
   <div class="steps">
     <div class="step-card">
       <div class="step-num">01</div>
@@ -723,82 +471,21 @@
     </div>
     <div class="step-card">
       <div class="step-num">02</div>
-      <div class="step-title">Store memories after each response</div>
-      <div class="step-desc">After your LLM responds, call <code style="color:var(--cyan);font-family:'Space Mono',monospace;font-size:0.85em">POST /memory/store</code> with the conversation text. MagnoAPI converts it to a vector and saves it permanently.</div>
+      <div class="step-title">Search before each LLM call</div>
+      <div class="step-desc">Call <code style="color:var(--cyan);font-family:'Space Mono',monospace;font-size:0.85em">POST /memory/search</code> with the user's message. Get back the most relevant past memories. Inject them into your prompt.</div>
     </div>
     <div class="step-card">
       <div class="step-num">03</div>
-      <div class="step-title">Retrieve context before each call</div>
-      <div class="step-desc">Before calling your LLM, call <code style="color:var(--pink);font-family:'Space Mono',monospace;font-size:0.85em">POST /memory/search</code> with the user's message. Inject the results into your prompt. Your AI now remembers.</div>
+      <div class="step-title">Store after each response</div>
+      <div class="step-desc">Call <code style="color:var(--pink);font-family:'Space Mono',monospace;font-size:0.85em">POST /memory/store</code> after your LLM responds. The conversation is saved as a vector. Your AI gets smarter with every session.</div>
     </div>
   </div>
 </section>
 
-<!-- Code -->
-<section class="code-section">
-  <div class="section-tag">// integration</div>
-  <h2>Two calls. Any language. Any LLM.</h2>
-
-  <div class="code-grid">
-    <div class="code-block">
-      <div class="code-header">
-        <div class="code-dot red"></div>
-        <div class="code-dot yellow"></div>
-        <div class="code-dot green"></div>
-        <span class="code-filename">your_app.py</span>
-      </div>
-      <pre><span class="cm"># Before calling your LLM</span>
-<span class="var">memories</span> = <span class="fn">requests</span>.<span class="fn">post</span>(<span class="str">"magnoapi/memory/search"</span>,
-  <span class="fn">headers</span>={<span class="str">"X-API-Key"</span>: <span class="str">"magno_sk_..."</span>},
-  <span class="fn">json</span>={
-    <span class="str">"user_id"</span>: <span class="str">"user_123"</span>,
-    <span class="str">"query"</span>:   user_message,
-    <span class="str">"top_k"</span>:   <span class="var">3</span>
-  }
-).<span class="fn">json</span>()[<span class="str">"results"</span>]
-
-<span class="cm"># Inject into your LLM prompt</span>
-<span class="var">context</span> = <span class="str">"\n"</span>.<span class="fn">join</span>([m[<span class="str">"text"</span>] <span class="kw">for</span> m <span class="kw">in</span> memories])
-<span class="var">prompt</span>  = <span class="fn">f</span><span class="str">"Context:\n{context}\n\nUser: {user_message}"</span>
-
-<span class="cm"># After your LLM responds</span>
-<span class="fn">requests</span>.<span class="fn">post</span>(<span class="str">"magnoapi/memory/store"</span>,
-  <span class="fn">headers</span>={<span class="str">"X-API-Key"</span>: <span class="str">"magno_sk_..."</span>},
-  <span class="fn">json</span>={<span class="str">"user_id"</span>: <span class="str">"user_123"</span>, <span class="str">"text"</span>: conversation}
-)</pre>
-    </div>
-
-    <ul class="code-points">
-      <li class="code-point">
-        <div class="cp-icon pink">🧠</div>
-        <div>
-          <div class="cp-title">Semantic search, not keyword search</div>
-          <div class="cp-desc">MagnoAPI uses vector embeddings to find memories by meaning, not exact words. "I love Python" and "Python is my favourite language" both match.</div>
-        </div>
-      </li>
-      <li class="code-point">
-        <div class="cp-icon cyan">⚡</div>
-        <div>
-          <div class="cp-title">Works with every LLM</div>
-          <div class="cp-desc">Claude, GPT-4, Gemini, Llama, Mistral — MagnoAPI sits between your app and any LLM. Completely model-agnostic.</div>
-        </div>
-      </li>
-      <li class="code-point">
-        <div class="cp-icon lime">🔒</div>
-        <div>
-          <div class="cp-title">Per-user memory isolation</div>
-          <div class="cp-desc">Every memory is scoped to a user_id. User A never sees User B's memories. Built-in privacy by design.</div>
-        </div>
-      </li>
-    </ul>
-  </div>
-</section>
-
-<!-- Pricing -->
+<!-- PRICING -->
 <section id="pricing">
   <div class="section-tag">// pricing</div>
   <h2>Start free. Scale as you grow.</h2>
-
   <div class="pricing-grid">
     <div class="price-card">
       <div class="price-name">Free</div>
@@ -812,7 +499,6 @@
       </ul>
       <button class="price-btn outline" onclick="document.getElementById('get-key').scrollIntoView({behavior:'smooth'})">Get started free</button>
     </div>
-
     <div class="price-card featured">
       <div class="price-name">Pro</div>
       <div class="price-amount pro">$29</div>
@@ -824,9 +510,8 @@
         <li>Email support</li>
         <li>Usage dashboard</li>
       </ul>
-      <button class="price-btn solid" onclick="document.getElementById('get-key').scrollIntoView({behavior:'smooth'})">Upgrade to Pro</button>
+      <button class="price-btn solid" onclick="openModal('proModal')">Upgrade to Pro →</button>
     </div>
-
     <div class="price-card">
       <div class="price-name">Enterprise</div>
       <div class="price-amount ent">Custom</div>
@@ -838,32 +523,23 @@
         <li>SLA guarantee</li>
         <li>Slack support</li>
       </ul>
-      <button class="price-btn outline" onclick="window.location='mailto:triviacolosseum@gmail.com'">Contact us</button>
+      <button class="price-btn cyan-btn" onclick="openModal('entModal')">Contact us →</button>
     </div>
   </div>
 </section>
 
-<!-- Get API Key -->
+<!-- GET API KEY -->
 <section class="get-key-section" id="get-key">
   <div class="section-tag" style="text-align:center">// get started</div>
   <h2 style="text-align:center;margin:0 auto">Your API key is one click away.</h2>
   <p style="text-align:center;color:var(--muted);margin-top:1rem;font-size:0.95rem">Free forever. No credit card. Ready in seconds.</p>
-
   <div class="key-box">
     <div class="key-form">
       <div class="input-row">
-        <input
-          type="email"
-          class="key-input"
-          id="emailInput"
-          placeholder="you@example.com"
-          autocomplete="email"
-        />
-        <button class="key-btn" id="getKeyBtn" onclick="getApiKey()">
-          Get my key →
-        </button>
+        <input type="email" class="key-input" id="emailInput" placeholder="you@example.com" autocomplete="email"/>
+        <button class="key-btn" id="getKeyBtn" onclick="getApiKey()">Get my key →</button>
       </div>
-      <div class="key-error" id="keyError"></div>
+      <div class="key-error"  id="keyError"></div>
       <div class="key-result" id="keyResult">
         <div class="key-result-label">✓ Your MagnoAPI key</div>
         <div class="key-result-value" id="keyValue"></div>
@@ -873,7 +549,7 @@
   </div>
 </section>
 
-<!-- Footer -->
+<!-- FOOTER -->
 <footer>
   <div class="footer-logo">Magno<span>API</span></div>
   <div class="footer-links">
@@ -884,101 +560,101 @@
 </footer>
 
 <script>
-  // ── Custom cursor ───────────────────────────────────────
-  const cursor     = document.getElementById('cursor');
-  const cursorRing = document.getElementById('cursorRing');
-  let mx = 0, my = 0, rx = 0, ry = 0;
+  // ── Cursor ──────────────────────────────────────────────
+  const cursor=document.getElementById('cursor'),cursorRing=document.getElementById('cursorRing');
+  let mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cursor.style.left=mx-6+'px';cursor.style.top=my-6+'px';});
+  (function animRing(){rx+=(mx-rx-18)*0.12;ry+=(my-ry-18)*0.12;cursorRing.style.left=rx+'px';cursorRing.style.top=ry+'px';requestAnimationFrame(animRing);})();
+  document.querySelectorAll('a,button').forEach(el=>{el.addEventListener('mouseenter',()=>cursor.style.transform='scale(2.5)');el.addEventListener('mouseleave',()=>cursor.style.transform='scale(1)');});
 
-  document.addEventListener('mousemove', e => {
-    mx = e.clientX; my = e.clientY;
-    cursor.style.left     = mx - 6  + 'px';
-    cursor.style.top      = my - 6  + 'px';
-  });
-
-  function animRing() {
-    rx += (mx - rx - 18) * 0.12;
-    ry += (my - ry - 18) * 0.12;
-    cursorRing.style.left = rx + 'px';
-    cursorRing.style.top  = ry + 'px';
-    requestAnimationFrame(animRing);
+  // ── Code tabs ───────────────────────────────────────────
+  function switchTab(id){
+    document.querySelectorAll('.code-tab,.code-content').forEach(el=>el.classList.remove('active'));
+    document.querySelector(`[onclick="switchTab('${id}')"]`).classList.add('active');
+    document.getElementById('tab-'+id).classList.add('active');
   }
-  animRing();
 
-  document.querySelectorAll('a,button,.btn-primary,.btn-ghost,.price-btn,.nav-cta').forEach(el => {
-    el.addEventListener('mouseenter', () => cursor.style.transform = 'scale(2.5)');
-    el.addEventListener('mouseleave', () => cursor.style.transform = 'scale(1)');
+  // ── Modal ───────────────────────────────────────────────
+  function openModal(id){
+    document.getElementById(id).classList.add('open');
+    document.body.style.overflow='hidden';
+  }
+  function closeModal(id){
+    document.getElementById(id).classList.remove('open');
+    document.body.style.overflow='';
+  }
+  document.querySelectorAll('.modal-overlay').forEach(overlay=>{
+    overlay.addEventListener('click',e=>{if(e.target===overlay)closeModal(overlay.id);});
   });
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal-overlay.open').forEach(m=>closeModal(m.id));});
+
+  // ── Pro payment submit ──────────────────────────────────
+  async function submitPro(){
+    const email=document.getElementById('proEmail').value.trim();
+    const err=document.getElementById('proError');
+    err.classList.remove('show');
+
+    if(!email||!email.includes('@')){err.textContent='→ Please enter a valid email.';err.classList.add('show');return;}
+
+    // Show success then redirect to Stripe
+    document.getElementById('proFormSection').style.display='none';
+    document.getElementById('proSuccess').classList.add('show');
+
+    // ⚠️ REPLACE THIS URL with your real Stripe payment link
+    // Create one at: dashboard.stripe.com → Payment Links → Create
+    const STRIPE_PRO_URL = 'https://buy.stripe.com/YOUR_STRIPE_PRO_LINK';
+
+    setTimeout(()=>{
+      window.location.href = STRIPE_PRO_URL + '?prefilled_email=' + encodeURIComponent(email);
+    }, 1800);
+  }
+
+  // ── Enterprise submit ───────────────────────────────────
+  async function submitEnterprise(){
+    const email   = document.getElementById('entEmail').value.trim();
+    const company = document.getElementById('entCompany').value.trim();
+    const volume  = document.getElementById('entVolume').value.trim();
+    const err     = document.getElementById('entError');
+    err.classList.remove('show');
+
+    if(!email||!email.includes('@')){err.textContent='→ Please enter a valid email.';err.classList.add('show');return;}
+    if(!company){err.textContent='→ Please enter your company name.';err.classList.add('show');return;}
+
+    // Send enquiry email via mailto (replace with a proper email API later)
+    const subject = encodeURIComponent(`MagnoAPI Enterprise Enquiry — ${company}`);
+    const body    = encodeURIComponent(`Company: ${company}\nEmail: ${email}\nEstimated monthly calls: ${volume||'Not specified'}`);
+
+    document.getElementById('entEmailConfirm').textContent = email;
+    document.getElementById('entFormSection').style.display='none';
+    document.getElementById('entSuccess').classList.add('show');
+
+    setTimeout(()=>{ window.open(`mailto:triviacolosseum@gmail.com?subject=${subject}&body=${body}`,'_blank'); }, 800);
+  }
 
   // ── Scroll reveal ───────────────────────────────────────
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(e => {
-      if (e.isIntersecting) {
-        e.target.style.animation = 'fadeUp 0.6s ease both';
-        observer.unobserve(e.target);
-      }
-    });
-  }, { threshold: 0.1 });
-
-  document.querySelectorAll('.ba-card,.step-card,.price-card,.code-block').forEach(el => {
-    el.style.opacity = '0';
-    observer.observe(el);
-  });
+  const observer=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){e.target.style.animation='fadeUp 0.6s ease both';observer.unobserve(e.target);}});
+  },{threshold:0.1});
+  document.querySelectorAll('.ba-card,.step-card,.price-card,.flow-box').forEach(el=>{el.style.opacity='0';observer.observe(el);});
 
   // ── Get API Key ─────────────────────────────────────────
-  async function getApiKey() {
-    const email  = document.getElementById('emailInput').value.trim();
-    const btn    = document.getElementById('getKeyBtn');
-    const result = document.getElementById('keyResult');
-    const error  = document.getElementById('keyError');
-    const value  = document.getElementById('keyValue');
-
-    error.classList.remove('show');
-    result.classList.remove('show');
-
-    if (!email || !email.includes('@')) {
-      error.textContent = '→ Please enter a valid email address.';
-      error.classList.add('show');
-      return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = 'Generating...';
-
-    try {
-      const res = await fetch(
-        'https://magno-memory-api-production.up.railway.app/keys/create',
-        {
-          method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ email })
-        }
-      );
-
-      const data = await res.json();
-
-      if (res.ok) {
-        value.textContent = data.api_key;
-        result.classList.add('show');
-        btn.textContent = '✓ Done!';
-        btn.style.background = 'var(--lime)';
-      } else {
-        error.textContent = '→ ' + (data.detail || 'Something went wrong. Try again.');
-        error.classList.add('show');
-        btn.disabled = false;
-        btn.textContent = 'Get my key →';
-      }
-    } catch (err) {
-      error.textContent = '→ Could not reach the API. Please try again.';
-      error.classList.add('show');
-      btn.disabled = false;
-      btn.textContent = 'Get my key →';
-    }
+  async function getApiKey(){
+    const email=document.getElementById('emailInput').value.trim();
+    const btn=document.getElementById('getKeyBtn');
+    const result=document.getElementById('keyResult');
+    const error=document.getElementById('keyError');
+    const value=document.getElementById('keyValue');
+    error.classList.remove('show');result.classList.remove('show');
+    if(!email||!email.includes('@')){error.textContent='→ Please enter a valid email address.';error.classList.add('show');return;}
+    btn.disabled=true;btn.textContent='Generating...';
+    try{
+      const res=await fetch('https://magno-memory-api-production.up.railway.app/keys/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
+      const data=await res.json();
+      if(res.ok){value.textContent=data.api_key;result.classList.add('show');btn.textContent='✓ Done!';btn.style.background='var(--lime)';}
+      else{error.textContent='→ '+(data.detail||'Something went wrong.');error.classList.add('show');btn.disabled=false;btn.textContent='Get my key →';}
+    }catch(e){error.textContent='→ Could not reach the API. Try again.';error.classList.add('show');btn.disabled=false;btn.textContent='Get my key →';}
   }
-
-  // Allow Enter key to submit
-  document.getElementById('emailInput').addEventListener('keydown', e => {
-    if (e.key === 'Enter') getApiKey();
-  });
+  document.getElementById('emailInput').addEventListener('keydown',e=>{if(e.key==='Enter')getApiKey();});
 </script>
 </body>
 </html>
