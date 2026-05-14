@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # MagnoAPI 🧠
 ### Give any AI app persistent memory. Two endpoints. That's it.
 
@@ -10,16 +10,16 @@ When a user chats with an AI app, everything is forgotten the moment the
 conversation ends. This API solves that permanently.
 
 ```
-WITHOUT your API:              WITH your API:
+WITHOUT Magno API:              WITH Magno API:
 ─────────────────              ──────────────────────────────
 User: "I like Python"          User: "I like Python"
 AI:   "Great!"                 AI:   "Great!"
-                                     ↓ your API saves this
+                                     ↓ Magno API saves this
 [next day]                     [next day]
 User: "What should I use?"     User: "What should I use?"
 AI:   "I don't know your       AI:   "Based on your preference
        preferences..."                for Python, I'd recommend..."
-                                     ↑ your API retrieved this
+                                     ↑ Magno API retrieves this
 ```
 
 ---
