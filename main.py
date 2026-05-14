@@ -12,6 +12,7 @@ import secrets
 import json
 import os
 
+
 # ── Load environment variables ─────────────────────────────────────────────
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -41,7 +42,7 @@ Get your free API key by calling `POST /keys/create` with your email.
 - 1,000 API calls per month
 - Includes both store and search operations
 """,
-    version="2.0.0"
+    version="1.0.0"
 )
 
 
