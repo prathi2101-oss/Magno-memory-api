@@ -61,9 +61,7 @@ requests.post("https://yourapi.com/memory/search", json={
 
 ---
 
+Built with FastAPI + Supabase pgvector + sentence-transformers
 =======
 # Magno-memory-api
->>>>>>>
-
-# In Development
-# New Updates And Changes Coming Soon 
+>>>>>>> 47c374ce3e2463adbb18e941a3069e903c2c87a3
