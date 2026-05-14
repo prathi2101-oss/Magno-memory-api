@@ -40,7 +40,7 @@ import requests
 
 # ── Before calling Claude/GPT/Gemini ─────────────────────────────
 # Get relevant memories for the user's current message
-memories = requests.post("https://yourapi.com/memory/search", json={
+memories = requests.post("https://Magnoapi.com/memory/search", json={
     "user_id": "user_123",
     "query":   "What are my project preferences?",
     "top_k":   3
@@ -52,7 +52,7 @@ context = "\n".join([m["text"] for m in memories])
 
 # ── After getting the LLM response ───────────────────────────────
 # Save what just happened
-requests.post("https://yourapi.com/memory/search", json={
+requests.post("https://Magnoapi.com/memory/search", json={
     "user_id": "user_123",
     "text":    "User asked about project preferences and prefers Python + FastAPI",
     "metadata": {"session": "2026-05-08"}
