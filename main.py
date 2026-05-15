@@ -1,5 +1,5 @@
-from fastapi.responses import FileResponse
 from fastapi import FastAPI, HTTPException, Security, Depends
+from fastapi.responses import FileResponse
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
@@ -11,11 +11,15 @@ import numpy as np
 import secrets
 import json
 import os
-
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 # ── Load environment variables ─────────────────────────────────────────────
 load_dotenv()
-DATABASE_URL = os.getenv("DATABASE_URL")
+DATABASE_URL      = os.getenv("DATABASE_URL")
+GMAIL_USER        = os.getenv("GMAIL_USER")
+GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
 
 if not DATABASE_URL:
     raise ValueError("DATABASE_URL must be set in your .env file")
@@ -37,13 +41,179 @@ X-API-Key: magno_sk_your_key_here
 ```
 
 Get your free API key by calling `POST /keys/create` with your email.
+Your key will be sent directly to your inbox — it is never shown on the webpage.
 
 ## Free Tier
 - 1,000 API calls per month
 - Includes both store and search operations
 """,
-    version="1.0.0"
+    version="3.0.0"
 )
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# EMAIL HELPER
+#
+# Sends the API key directly to the user's email address.
+# The key is NEVER returned in the API response — only delivered via email.
+# This means only the person who owns that inbox can ever see their key.
+# ══════════════════════════════════════════════════════════════════════════
+
+def send_api_key_email(to_email: str, api_key: str, is_existing: bool = False):
+    """
+    Send a beautifully formatted HTML email containing the user's API key.
+    Uses Gmail SMTP with an App Password for secure sending.
+    """
+    if not GMAIL_USER or not GMAIL_APP_PASSWORD:
+        print("WARNING: Gmail credentials not set. Email not sent.")
+        return False
+
+    subject = "Your MagnoAPI Key is Ready" if not is_existing else "Your MagnoAPI Key (resent)"
+
+    # ── HTML email body — matches MagnoAPI's bold colorful design ──────────
+    html_body = f"""
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background:#050508;font-family:'Helvetica Neue',Arial,sans-serif;">
+
+  <div style="max-width:560px;margin:0 auto;padding:40px 20px;">
+
+    <!-- Header -->
+    <div style="margin-bottom:32px;">
+      <span style="font-size:24px;font-weight:900;color:#f0f0f5;letter-spacing:-0.02em;">
+        Magno<span style="color:#ff2d6b;">API</span>
+      </span>
+    </div>
+
+    <!-- Hero -->
+    <div style="background:#0e0e14;border:1px solid #1e1e2e;border-radius:12px;padding:32px;margin-bottom:24px;">
+      <div style="display:inline-block;background:rgba(184,255,60,0.1);border:1px solid rgba(184,255,60,0.3);border-radius:4px;padding:4px 12px;margin-bottom:20px;">
+        <span style="font-size:11px;color:#b8ff3c;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;">
+          {'✓ Key Retrieved' if is_existing else '✓ Key Created'}
+        </span>
+      </div>
+
+      <h1 style="color:#f0f0f5;font-size:28px;font-weight:900;margin:0 0 8px;letter-spacing:-0.02em;">
+        {'Here is your existing key' if is_existing else 'Your API key is ready.'}
+      </h1>
+      <p style="color:#888899;font-size:15px;margin:0 0 28px;line-height:1.5;">
+        Keep this key private — treat it like a password. 
+        It gives full access to your MagnoAPI account.
+      </p>
+
+      <!-- The API Key -->
+      <div style="background:#080810;border:1px solid rgba(0,245,255,0.2);border-radius:8px;padding:20px;margin-bottom:8px;">
+        <div style="font-size:10px;color:#00f5ff;text-transform:uppercase;letter-spacing:0.12em;font-weight:700;margin-bottom:8px;font-family:monospace;">
+          Your MagnoAPI Key
+        </div>
+        <div style="font-family:monospace;font-size:14px;color:#f0f0f5;word-break:break-all;line-height:1.5;">
+          {api_key}
+        </div>
+      </div>
+      <p style="color:#585b70;font-size:12px;margin:0;font-family:monospace;">
+        Never share this key publicly or commit it to GitHub.
+      </p>
+    </div>
+
+    <!-- How to use it -->
+    <div style="background:#0e0e14;border:1px solid #1e1e2e;border-radius:12px;padding:32px;margin-bottom:24px;">
+      <h2 style="color:#f0f0f5;font-size:18px;font-weight:800;margin:0 0 20px;">
+        How to use your key
+      </h2>
+
+      <div style="margin-bottom:16px;">
+        <div style="font-size:11px;color:#ff2d6b;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;margin-bottom:8px;font-family:monospace;">
+          Step 1 — Add to every request header
+        </div>
+        <div style="background:#080810;border-radius:6px;padding:14px;font-family:monospace;font-size:13px;color:#b8ff3c;">
+          X-API-Key: {api_key}
+        </div>
+      </div>
+
+      <div style="margin-bottom:16px;">
+        <div style="font-size:11px;color:#ff2d6b;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;margin-bottom:8px;font-family:monospace;">
+          Step 2 — Search memories before your LLM call
+        </div>
+        <div style="background:#080810;border-radius:6px;padding:14px;font-family:monospace;font-size:12px;color:#cdd6f4;line-height:1.6;">
+          POST /memory/search<br>
+          {{"user_id": "your_user", "query": "user message", "top_k": 3}}
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size:11px;color:#ff2d6b;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;margin-bottom:8px;font-family:monospace;">
+          Step 3 — Store memory after your LLM responds
+        </div>
+        <div style="background:#080810;border-radius:6px;padding:14px;font-family:monospace;font-size:12px;color:#cdd6f4;line-height:1.6;">
+          POST /memory/store<br>
+          {{"user_id": "your_user", "text": "conversation text"}}
+        </div>
+      </div>
+    </div>
+
+    <!-- Plan details -->
+    <div style="background:#0e0e14;border:1px solid #1e1e2e;border-radius:12px;padding:24px;margin-bottom:24px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
+        <div>
+          <div style="font-size:11px;color:#888899;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;margin-bottom:4px;">Current Plan</div>
+          <div style="font-size:20px;font-weight:900;color:#b8ff3c;">Free Tier</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:#888899;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;margin-bottom:4px;">Monthly Limit</div>
+          <div style="font-size:20px;font-weight:900;color:#f0f0f5;">1,000 calls</div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:#888899;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;margin-bottom:4px;">LLMs Supported</div>
+          <div style="font-size:20px;font-weight:900;color:#f0f0f5;">All of them</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA -->
+    <div style="text-align:center;margin-bottom:32px;">
+      <a href="https://magno-memory-api-production.up.railway.app/docs"
+         style="display:inline-block;background:#ff2d6b;color:#050508;padding:14px 32px;border-radius:6px;font-weight:800;font-size:15px;text-decoration:none;letter-spacing:-0.01em;">
+        View API Documentation →
+      </a>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align:center;border-top:1px solid #1e1e2e;padding-top:24px;">
+      <p style="color:#585b70;font-size:12px;margin:0;font-family:monospace;">
+        MagnoAPI · Built different<br>
+        Questions? Reply to this email.
+      </p>
+    </div>
+
+  </div>
+</body>
+</html>
+"""
+
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"]    = f"MagnoAPI <{GMAIL_USER}>"
+        msg["To"]      = to_email
+
+        # Attach HTML version
+        msg.attach(MIMEText(html_body, "html"))
+
+        # Connect to Gmail's SMTP server and send
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
+            server.sendmail(GMAIL_USER, to_email, msg.as_string())
+
+        print(f"EMAIL SENT: API key delivered to {to_email}")
+        return True
+
+    except Exception as e:
+        print(f"EMAIL ERROR: {e}")
+        return False
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -56,25 +226,12 @@ def get_db():
 
 # ══════════════════════════════════════════════════════════════════════════
 # API KEY SECURITY
-#
-# FastAPI's APIKeyHeader reads the "X-API-Key" header from every request.
-# If the header is missing, it automatically returns a 403 error.
-# Our verify_api_key function then checks if the key exists in the database,
-# is active, and hasn't exceeded its usage limit.
 # ══════════════════════════════════════════════════════════════════════════
 
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
 
 async def verify_api_key(api_key: str = Security(api_key_header)):
-    """
-    Dependency injected into every protected endpoint.
-    Checks: key exists → key is active → usage is within limit.
-    On success: increments usage count and returns the key record.
-    On failure: raises 401 Unauthorized.
-    """
-
-    # Missing header
     if not api_key:
         raise HTTPException(
             status_code=401,
@@ -86,44 +243,27 @@ async def verify_api_key(api_key: str = Security(api_key_header)):
         conn = get_db()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-        # Look up the key in the database
         cur.execute("""
             SELECT id, email, tier, usage_count, usage_limit, is_active
-            FROM api_keys
-            WHERE key = %s
+            FROM api_keys WHERE key = %s
         """, (api_key,))
 
         record = cur.fetchone()
 
-        # Key doesn't exist
         if not record:
-            raise HTTPException(
-                status_code=401,
-                detail="Invalid API key. Check your key or get a new one at POST /keys/create"
-            )
+            raise HTTPException(status_code=401, detail="Invalid API key.")
 
-        # Key has been deactivated
         if not record["is_active"]:
-            raise HTTPException(
-                status_code=401,
-                detail="This API key has been deactivated. Contact support."
-            )
+            raise HTTPException(status_code=401, detail="This API key has been deactivated.")
 
-        # Usage limit exceeded
         if record["usage_count"] >= record["usage_limit"]:
             raise HTTPException(
                 status_code=429,
-                detail=f"Usage limit reached ({record['usage_limit']} calls/month on {record['tier']} tier). Upgrade at magnoapi.com/upgrade"
+                detail=f"Usage limit reached ({record['usage_limit']} calls/month on {record['tier']} tier)."
             )
 
-        # ✅ Key is valid — increment usage count
-        cur.execute("""
-            UPDATE api_keys
-            SET usage_count = usage_count + 1
-            WHERE key = %s
-        """, (api_key,))
+        cur.execute("UPDATE api_keys SET usage_count = usage_count + 1 WHERE key = %s", (api_key,))
         conn.commit()
-
         return dict(record)
 
     except HTTPException:
@@ -138,16 +278,16 @@ async def verify_api_key(api_key: str = Security(api_key_header)):
 
 # ══════════════════════════════════════════════════════════════════════════
 # REQUEST / RESPONSE MODELS
+# Note: CreateKeyResponse no longer contains the api_key.
+# The key is sent privately via email only.
 # ══════════════════════════════════════════════════════════════════════════
 
 class CreateKeyRequest(BaseModel):
     email: str
 
 class CreateKeyResponse(BaseModel):
-    api_key: str
     email: str
-    tier: str
-    usage_limit: int
+    status: str
     message: str
 
 class StoreRequest(BaseModel):
@@ -201,8 +341,6 @@ async def create_tables():
     try:
         conn = get_db()
         cur = conn.cursor()
-
-        # Memories table
         cur.execute("""
             CREATE TABLE IF NOT EXISTS memories (
                 id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -214,8 +352,6 @@ async def create_tables():
             );
             CREATE INDEX IF NOT EXISTS memories_user_id_idx ON memories (user_id);
         """)
-
-        # API keys table
         cur.execute("""
             CREATE TABLE IF NOT EXISTS api_keys (
                 id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -229,7 +365,6 @@ async def create_tables():
             );
             CREATE INDEX IF NOT EXISTS api_keys_key_idx ON api_keys (key);
         """)
-
         conn.commit()
         print("Database tables ready.")
     except Exception as e:
@@ -242,23 +377,16 @@ async def create_tables():
 # ══════════════════════════════════════════════════════════════════════════
 # ENDPOINT 1 — POST /keys/create
 #
-# PUBLIC endpoint — no API key required to call this.
-# A developer sends their email and gets back a unique API key.
-#
-# The key format is: magno_sk_ + 32 random hex characters
-# Example: magno_sk_a3f7c821b9d4e2f8c1a05d9e7b3f4c6d
-#
-# This is the only door into your system. Everything else is locked
-# behind the key that this endpoint creates.
+# Creates the key, emails it privately to the user, and returns
+# ONLY a success confirmation — never the key itself in the response.
 # ══════════════════════════════════════════════════════════════════════════
 
 @app.post("/keys/create", response_model=CreateKeyResponse)
 async def create_api_key(request: CreateKeyRequest):
     """
-    Get a free API key. No authentication required.
-    Send your email and receive your key instantly.
+    Get a free API key sent directly to your email.
+    The key is never shown on the webpage — only delivered to your inbox.
     """
-
     if not request.email or "@" not in request.email:
         raise HTTPException(status_code=400, detail="A valid email address is required.")
 
@@ -272,16 +400,17 @@ async def create_api_key(request: CreateKeyRequest):
         existing = cur.fetchone()
 
         if existing:
+            # Resend the existing key to their email
+            email_sent = send_api_key_email(request.email, existing["key"], is_existing=True)
             return CreateKeyResponse(
-                api_key=existing["key"],
                 email=request.email,
-                tier="free",
-                usage_limit=1000,
-                message="You already have an API key. Here it is again."
+                status="resent",
+                message=f"You already have a key. We've resent it to {request.email}. Check your inbox."
+                if email_sent else
+                f"You already have a key but email delivery failed. Contact support."
             )
 
-        # Generate a new unique key
-        # secrets.token_hex(16) generates 32 cryptographically random hex characters
+        # Generate a brand new key
         new_key = f"magno_sk_{secrets.token_hex(16)}"
 
         # Save to database
@@ -289,15 +418,18 @@ async def create_api_key(request: CreateKeyRequest):
             INSERT INTO api_keys (key, email, tier, usage_count, usage_limit, is_active)
             VALUES (%s, %s, 'free', 0, 1000, TRUE)
         """, (new_key, request.email))
-
         conn.commit()
 
+        # Send the key privately via email
+        # The key is NEVER included in the API response below
+        email_sent = send_api_key_email(request.email, new_key, is_existing=False)
+
         return CreateKeyResponse(
-            api_key=new_key,
             email=request.email,
-            tier="free",
-            usage_limit=1000,
-            message="Your API key has been created. Keep it safe — treat it like a password. Add it to all requests as: X-API-Key: " + new_key
+            status="created",
+            message=f"Your API key has been sent to {request.email}. Check your inbox (and spam folder just in case)."
+            if email_sent else
+            f"Key created but email delivery failed. Please contact triviacolosseum@gmail.com."
         )
 
     except HTTPException:
@@ -311,35 +443,22 @@ async def create_api_key(request: CreateKeyRequest):
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# ENDPOINT 2 — POST /memory/store
-#
-# PROTECTED — requires a valid API key in the X-API-Key header.
-# The `key_data = Depends(verify_api_key)` line is what enforces this.
-# FastAPI runs verify_api_key before the endpoint function even starts.
-# If the key is invalid, the request never reaches this function.
+# ENDPOINT 2 — POST /memory/store  (protected)
 # ══════════════════════════════════════════════════════════════════════════
 
 @app.post("/memory/store", response_model=StoreResponse)
 async def store_memory(
     request: StoreRequest,
-    key_data: dict = Depends(verify_api_key)   # ← API key check happens here
+    key_data: dict = Depends(verify_api_key)
 ):
-    """
-    Save a memory for a user.
-    Requires: X-API-Key header with your MagnoAPI key.
-    Call this AFTER your LLM responds.
-    """
-
     if not request.text.strip():
         raise HTTPException(status_code=400, detail="Text cannot be empty.")
 
     conn = None
     try:
         embedding = model.encode(request.text).tolist()
-
         conn = get_db()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-
         cur.execute("""
             INSERT INTO memories (user_id, text, embedding, metadata, stored_at)
             VALUES (%s, %s, %s, %s, %s)
@@ -351,16 +470,13 @@ async def store_memory(
             json.dumps(request.metadata),
             datetime.utcnow().isoformat()
         ))
-
         conn.commit()
         row = cur.fetchone()
-
         return StoreResponse(
             id=str(row["id"]),
             message="Memory stored successfully.",
             stored_at=str(row["stored_at"])
         )
-
     except HTTPException:
         raise
     except Exception as e:
@@ -372,38 +488,26 @@ async def store_memory(
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# ENDPOINT 3 — POST /memory/search
-#
-# PROTECTED — requires a valid API key in the X-API-Key header.
+# ENDPOINT 3 — POST /memory/search  (protected)
 # ══════════════════════════════════════════════════════════════════════════
 
 @app.post("/memory/search", response_model=SearchResponse)
 async def search_memories(
     request: SearchRequest,
-    key_data: dict = Depends(verify_api_key)   # ← API key check happens here
+    key_data: dict = Depends(verify_api_key)
 ):
-    """
-    Find memories relevant to the current query.
-    Requires: X-API-Key header with your MagnoAPI key.
-    Call this BEFORE your LLM call, then inject results into the prompt.
-    """
-
     if not request.query.strip():
         raise HTTPException(status_code=400, detail="Query cannot be empty.")
 
     conn = None
     try:
         query_vector = model.encode(request.query).tolist()
-
         conn = get_db()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-
         cur.execute("""
             SELECT id, text, embedding, metadata, stored_at
-            FROM memories
-            WHERE user_id = %s
+            FROM memories WHERE user_id = %s
         """, (request.user_id,))
-
         rows = cur.fetchall()
 
         if not rows:
@@ -422,12 +526,10 @@ async def search_memories(
 
         scored.sort(key=lambda x: x["similarity"], reverse=True)
         top_results = scored[:request.top_k]
-
         return SearchResponse(
             results=[MemoryResult(**r) for r in top_results],
             total_found=len(top_results)
         )
-
     except HTTPException:
         raise
     except Exception as e:
@@ -439,10 +541,9 @@ async def search_memories(
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# ROOT — Health check (public, no key required)
+# ROOT — Serves the landing page
 # ══════════════════════════════════════════════════════════════════════════
 
 @app.get("/")
 async def root():
     return FileResponse("index.html")
-    
