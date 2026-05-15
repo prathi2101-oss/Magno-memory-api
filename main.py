@@ -1,3 +1,4 @@
+from fastapi.responses import FileResponse
 from fastapi import FastAPI, HTTPException, Security, Depends
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel
@@ -442,13 +443,5 @@ async def search_memories(
 
 @app.get("/")
 async def root():
-    return {
-        "api":     "MagnoAPI",
-        "version": "2.0.0",
-        "status":  "running",
-        "docs":    "/docs",
-        "endpoints": {
-            "public":    ["POST /keys/create"],
-            "protected": ["POST /memory/store", "POST /memory/search"]
-        }
-    }
+    return FileResponse("index.html")
+    
