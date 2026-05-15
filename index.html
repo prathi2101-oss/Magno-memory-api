@@ -660,13 +660,14 @@ curl -X POST \
     const value=document.getElementById('keyValue');
     error.classList.remove('show');result.classList.remove('show');
     if(!email||!email.includes('@')){error.textContent='→ Please enter a valid email address.';error.classList.add('show');return;}
-    btn.disabled=true;btn.textContent='Generating...';
+    btn.disabled=true;btn.textContent='Sending...';
     try{
       const res=await fetch('https://magno-memory-api-production.up.railway.app/keys/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
       const data=await res.json();
-      if(res.ok){value.textContent=data.api_key;result.classList.add('show');btn.textContent='✓ Done!';btn.style.background='var(--lime)';}
-      else{error.textContent='→ '+(data.detail||'Something went wrong.');error.classList.add('show');btn.disabled=false;btn.textContent='Get my key →';}
-    }catch(e){error.textContent='→ Could not reach the API. Try again.';error.classList.add('show');btn.disabled=false;btn.textContent='Get my key →';}
+      if(res.ok){// Show inbox notification - never show the key on the page 
+                 value.textContent = data.message; result.classList.add('show');btn.textContent ='✓ Email sent!';btn.style.background='var(--lime)';btn.style.color = 'var(--black)';}
+      else{error.textContent='→ '+(data.detail||'Something went wrong. Try again.');error.classList.add('show');btn.disabled=false;btn.textContent='Get my key →';}
+    }catch(err){error.textContent='→ Could not reach the API. Try again.';error.classList.add('show');btn.disabled=false;btn.textContent='Get my key →';}
   }
   document.getElementById('emailInput').addEventListener('keydown',e=>{if(e.key==='Enter')getApiKey();});
 </script>
