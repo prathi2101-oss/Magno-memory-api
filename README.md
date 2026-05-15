@@ -35,6 +35,10 @@ AI:   "I don't know your       AI:   "Based on your preference
 
 ## How You Can Use Magno API For Your Own      Software 
 
+### Get Your Free API key from the website below 👇 
+
+### https://magno-memory-api-production.up.railway.app/
+
 ```python
 import requests
 
