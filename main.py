@@ -47,7 +47,7 @@ Your key will be sent directly to your inbox — it is never shown on the webpag
 - 1,000 API calls per month
 - Includes both store and search operations
 """,
-    version="3.0.0"
+    version="1.0.0"
 )
 
 
