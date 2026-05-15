@@ -1,4 +1,3 @@
-
 # MagnoAPI 🧠
 ### Give any AI app persistent memory. Two endpoints. That's it.
 
@@ -33,9 +32,11 @@ AI:   "I don't know your       AI:   "Based on your preference
 
 ---
 
-## How You Can Use Magno API For Your Own      Software 
+## How You Can Use Magno API For Your Own Software 
 
-### Get Your Free API key from the website below 👇 
+### Magno API is designed for user and developer safety and all of your information stays protected at all costs🔒
+
+### Get Your Free API key from the webpage below 👇 
 
 ### https://magno-memory-api-production.up.railway.app/
 
