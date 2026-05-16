@@ -59,6 +59,7 @@ Your key will be sent directly to your inbox — it is never shown on the webpag
 # This means only the person who owns that inbox can ever see their key.
 # ══════════════════════════════════════════════════════════════════════════
 
+#def defines the function 
 def send_api_key_email(to_email: str, api_key: str, is_existing: bool = False):
     """
     Send a beautifully formatted HTML email containing the user's API key.
