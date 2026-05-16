@@ -554,9 +554,9 @@ curl -X POST \
       </div>
       <div class="key-error"  id="keyError"></div>
       <div class="key-result" id="keyResult">
-        <div class="key-result-label">✓ Your MagnoAPI key</div>
-        <div class="key-result-value" id="keyValue"></div>
-      </div>
+        <div class="key-result-label">✓ Check your inbox</div>
+        <div class="key-result-value" id="keyValue" style="color:#b8ff3c;font-size:0.9rem;line-height:1.6;">
+      </div> 
     </div>
     <p class="key-note">By signing up you agree to the free tier limit of 1,000 calls/month. Upgrade anytime.</p>
   </div>
@@ -672,3 +672,56 @@ curl -X POST \
 </script>
 </body>
 </html>
+async function getApiKey() {
+    const email  = document.getElementById('emailInput').value.trim();
+    const btn    = document.getElementById('getKeyBtn');
+    const result = document.getElementById('keyResult');
+    const error  = document.getElementById('keyError');
+    const value  = document.getElementById('keyValue');
+
+    error.classList.remove('show');
+    result.classList.remove('show');
+
+    if (!email || !email.includes('@')) {
+      error.textContent = '→ Please enter a valid email address.';
+      error.classList.add('show');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+
+    try {
+      const res = await fetch(
+        'https://magno-memory-api-production.up.railway.app/keys/create',
+        {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ email })
+        }
+      );
+
+      const data = await res.json();
+
+      if (res.ok) {
+        // Show inbox notification — never show the key on the page
+        value.textContent = data.message;
+        result.classList.add('show');
+        btn.textContent = '✓ Email sent!';
+        btn.style.background = 'var(--lime)';
+        btn.style.color = 'var(--black)';
+      } else {
+        error.textContent = '→ ' + (data.detail || 'Something went wrong. Try again.');
+        error.classList.add('show');
+        btn.disabled = false;
+        btn.textContent = 'Get my key →';
+      }
+    } catch (err) {
+      error.textContent = '→ Could not reach the API. Please try again.';
+      error.classList.add('show');
+      btn.disabled = false;
+      btn.textContent = 'Get my key →';
+    }
+}
+    
+  
