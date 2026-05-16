@@ -16,6 +16,8 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 # ── Load environment variables ─────────────────────────────────────────────
+# load_dotenv() loads the variables from the .env file
+# os.getenv calls the variables 
 load_dotenv()
 DATABASE_URL      = os.getenv("DATABASE_URL")
 GMAIL_USER        = os.getenv("GMAIL_USER")
